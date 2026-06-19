@@ -1,106 +1,834 @@
 <!DOCTYPE html>
-<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>HIBOUX V3</title>
-<style>
-body{margin:0;background:#000;color:#fff;font-family:Arial}
-#menu{padding:20px;background:#081425;min-height:100vh}
-button{padding:12px 18px;border-radius:12px;border:0}
-#stealth{display:none;position:fixed;inset:0;background:#000;z-index:10}
-#call{display:none;position:fixed;inset:0;background:#111827;color:#fff;z-index:20;text-align:center;padding-top:40px}
-#hang{background:#c00;color:#fff;border-radius:50%;width:80px;height:80px}
-</style></head>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>HIBOUX V3 — Je veille sur toi</title>
+  <style>
+    :root{
+      --bg:#07111f; --bg2:#0d2038; --text:#f8fbff; --muted:#b7c6da;
+      --line:rgba(255,255,255,.14); --card:rgba(255,255,255,.075);
+      --blue:#7dd3fc; --green:#86efac; --gold:#facc15; --orange:#fb923c; --red:#fb7185;
+      --shadow:0 24px 70px rgba(0,0,0,.38);
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{
+      margin:0;
+      width:100%;
+      min-height:100%;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:#000;
+      overflow:hidden;
+    }
+
+    body{
+      background:
+        radial-gradient(circle at top left,rgba(125,211,252,.22),transparent 34%),
+        radial-gradient(circle at bottom right,rgba(250,204,21,.10),transparent 36%),
+        linear-gradient(145deg,var(--bg),var(--bg2));
+    }
+
+    .app{
+      width:100vw;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+
+    .phone{
+      width:min(450px,100%);
+      height:calc(100vh - 32px);
+      max-height:940px;
+      min-height:650px;
+      border-radius:38px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.055);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      backdrop-filter:blur(18px);
+    }
+
+    header{
+      padding:22px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .brand{display:flex;align-items:center;gap:13px}
+
+    .logo{
+      width:56px;height:56px;border-radius:19px;
+      display:grid;place-items:center;font-size:32px;
+      background:linear-gradient(145deg,rgba(125,211,252,.22),rgba(250,204,21,.12));
+      border:1px solid var(--line);
+    }
+
+    h1{margin:0;font-size:25px;letter-spacing:.5px}
+    .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+    .pill{
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.07);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+
+    .pill.active{
+      color:#dfffe8;
+      border-color:rgba(134,239,172,.32);
+      background:rgba(134,239,172,.10);
+    }
+
+    .content{
+      padding:20px;
+      height:calc(100% - 101px);
+      overflow:auto;
+    }
+
+    .hero,.panel{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.075);
+      border-radius:28px;
+      padding:18px;
+      margin-bottom:14px;
+    }
+
+    .hero{
+      background:
+        radial-gradient(circle at top right,rgba(125,211,252,.16),transparent 35%),
+        linear-gradient(145deg,rgba(255,255,255,.115),rgba(255,255,255,.045));
+    }
+
+    .owl{font-size:62px;margin-bottom:8px}
+    h2{margin:0 0 8px;font-size:25px}
+    p{margin:0;color:var(--muted);line-height:1.45;font-size:14.5px}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+
+    button,select{
+      font:inherit;
+      border-radius:18px;
+      border:1px solid var(--line);
+      outline:none;
+    }
+
+    button{
+      min-height:54px;
+      padding:13px 14px;
+      color:var(--text);
+      cursor:pointer;
+      background:rgba(255,255,255,.1);
+      transition:.15s transform,.15s opacity;
+    }
+
+    button:active{transform:scale(.98)}
+    button:disabled{opacity:.45}
+
+    .primary{
+      background:linear-gradient(145deg,#0ea5e9,#0369a1);
+      font-weight:900;
+      border:none;
+      box-shadow:0 14px 32px rgba(14,165,233,.20);
+    }
+
+    .secondary{background:rgba(255,255,255,.105)}
+
+    select{
+      width:100%;
+      padding:13px;
+      background:rgba(255,255,255,.09);
+      color:var(--text);
+    }
+    option{color:#111827}
+
+    .notice{
+      padding:14px;
+      border-radius:20px;
+      background:rgba(125,211,252,.10);
+      border:1px solid rgba(125,211,252,.22);
+      color:#d7e8f6;
+      font-size:13px;
+      line-height:1.4;
+      margin-bottom:14px;
+    }
+
+    .scoreline{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .title{font-weight:850;margin-bottom:10px}
+    .score{font-size:38px;font-weight:950;letter-spacing:-1px}
+    .level{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      background:rgba(255,255,255,.07);
+    }
+
+    .bar{height:12px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:10px}
+    .fill{height:100%;width:0%;background:var(--green);transition:.25s}
+    .small{font-size:12.5px;color:var(--muted);line-height:1.4}
+    .log{
+      min-height:62px;
+      max-height:110px;
+      overflow:auto;
+      white-space:pre-wrap;
+      color:#dfefff;
+      font-size:12.5px;
+      line-height:1.38;
+      opacity:.8;
+    }
+
+    /* ÉCRAN NOIR : aucun cadre, aucun texte visible */
+    .stealth{
+      position:fixed;
+      inset:0;
+      z-index:80;
+      display:none;
+      background:#000;
+      border:none!important;
+      outline:none!important;
+      box-shadow:none!important;
+      color:transparent;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .stealth.active{display:block}
+    .tapHint{
+      position:absolute;
+      top:18px;
+      left:50%;
+      transform:translateX(-50%);
+      color:rgba(255,255,255,.18);
+      font-size:11px;
+      opacity:0;
+      transition:.15s;
+    }
+    .tapHint.show{opacity:1}
+
+    /* SMS simulé */
+    .sms{
+      position:fixed;
+      left:15px;
+      right:15px;
+      top:calc(env(safe-area-inset-top) + 14px);
+      z-index:120;
+      display:none;
+      padding:14px 15px;
+      border-radius:22px;
+      background:rgba(250,250,250,.97);
+      color:#111827;
+      box-shadow:0 16px 38px rgba(0,0,0,.35);
+      animation:drop .25s ease-out;
+      max-width:430px;
+      margin:auto;
+    }
+    .sms.show{display:block}
+    .sms strong{display:block;margin-bottom:3px}
+    .sms span{color:#4b5563;font-size:13px}
+    @keyframes drop{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+
+    /* APPEL */
+    .call{
+      position:fixed;
+      inset:0;
+      z-index:140;
+      display:none;
+      flex-direction:column;
+      justify-content:space-between;
+      align-items:center;
+      text-align:center;
+      padding:calc(env(safe-area-inset-top) + 28px) 22px calc(env(safe-area-inset-bottom) + 20px);
+      background:
+        radial-gradient(circle at top,rgba(125,211,252,.24),transparent 42%),
+        linear-gradient(180deg,#111827,#020617);
+    }
+    .call.show{display:flex}
+    .incoming{color:rgba(255,255,255,.65);font-size:14px;margin-bottom:14px}
+    .avatar{
+      width:88px;height:88px;border-radius:50%;
+      margin:0 auto 14px;
+      display:grid;place-items:center;
+      font-size:42px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .caller{font-size:32px;font-weight:950;letter-spacing:.5px}
+    .mobile{margin-top:5px;color:rgba(255,255,255,.62);font-size:13px}
+    .timer{margin-top:9px;color:rgba(255,255,255,.64);font-size:15px;font-variant-numeric:tabular-nums}
+    .call-actions{
+      display:flex;
+      width:min(360px,100%);
+      justify-content:space-around;
+      gap:28px;
+    }
+    .round{
+      width:70px;height:70px;border-radius:50%;
+      font-size:28px;padding:0;border:none;
+    }
+    .green{background:linear-gradient(145deg,#22c55e,#15803d);font-weight:800}
+    .redbtn{background:linear-gradient(145deg,#fb7185,#be123c);font-weight:800}
+    .under{margin-top:8px;color:rgba(255,255,255,.74);font-size:12px}
+    .hangArea{
+      display:none;
+      width:100%;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      gap:8px;
+    }
+    .hangArea.show{display:flex}
+    .hangBtn{
+      width:72px;height:72px;border-radius:50%;
+      border:none;background:linear-gradient(145deg,#fb7185,#be123c);
+      font-size:29px;
+      transform:rotate(135deg);
+    }
+    .quiet{
+      color:rgba(255,255,255,.48);
+      font-size:12px;
+    }
+
+    footer{
+      padding:0 22px 20px;
+      text-align:center;
+      color:rgba(255,255,255,.45);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    @media(max-width:420px){
+      .app{padding:0}
+      .phone{border-radius:0;min-height:100vh;height:100vh;border:none;max-height:none}
+      .grid{grid-template-columns:1fr}
+      header{padding:18px}
+      .content{padding:16px;height:calc(100% - 93px)}
+      .hero,.panel{padding:16px;border-radius:24px}
+      .owl{font-size:54px}
+      .caller{font-size:30px}
+    }
+
+    @media(max-height:700px){
+      .call{padding:18px 20px 14px}
+      .avatar{width:74px;height:74px;font-size:35px;margin-bottom:9px}
+      .caller{font-size:28px}
+      .incoming{margin-bottom:8px}
+      .round,.hangBtn{width:62px;height:62px}
+    }
+  </style>
+</head>
 <body>
-<div id="menu">
-<h1>🦉 HIBOUX V3</h1>
-<p>Phrase test conservée : "il fait chaud" = +20 points.</p>
-<button onclick="launch()">Lancer HIBOUX</button>
-<div>Score : <span id="score">0</span></div>
-</div>
+<main class="app">
+  <section class="phone">
 
-<div id="stealth"></div>
+    <div class="sms" id="sms">
+      <strong id="smsWho">Maman</strong>
+      <span>Tu peux m’appeler deux minutes ?</span>
+    </div>
 
-<div id="call">
-<h2 id="caller">MAMAN</h2>
-<div id="timer">00:00</div>
-<br><br>
-<button id="hang" onclick="hangup()">📞</button>
-</div>
+    <section class="call" id="call">
+      <div>
+        <div class="incoming" id="incomingText">appel entrant</div>
+        <div class="avatar" id="avatar">👩</div>
+        <div class="caller" id="callerName">MAMAN</div>
+        <div class="mobile">mobile</div>
+        <div class="timer" id="timer">00:00</div>
+      </div>
+
+      <div class="call-actions" id="callActions">
+        <div>
+          <button class="round redbtn" id="decline">✕</button>
+          <div class="under">Refuser</div>
+        </div>
+        <div>
+          <button class="round green" id="answer">✓</button>
+          <div class="under">Répondre</div>
+        </div>
+      </div>
+
+      <div class="hangArea" id="hangArea">
+        <button class="hangBtn" id="hang">📞</button>
+        <div class="quiet">appel en cours</div>
+      </div>
+    </section>
+
+    <section class="stealth" id="stealth">
+      <div class="tapHint" id="tapHint">1/4</div>
+    </section>
+
+    <header>
+      <div class="brand">
+        <div class="logo">🦉</div>
+        <div>
+          <h1>HIBOUX V3</h1>
+          <div class="sub">Je veille sur toi</div>
+        </div>
+      </div>
+      <div class="pill" id="status">prêt</div>
+    </header>
+
+    <div class="content">
+      <section class="hero">
+        <div class="owl">🦉</div>
+        <h2>Mode protection discrète</h2>
+        <p>
+          Lance HIBOUX avant une situation sensible. L’écran devient totalement noir.
+          L’application écoute, analyse les mots détectés et déclenche un SMS ou un appel MAMAN/PAPA.
+        </p>
+
+        <div class="grid">
+          <select id="caller">
+            <option value="MAMAN">Appel de MAMAN</option>
+            <option value="PAPA">Appel de PAPA</option>
+          </select>
+          <select id="sensitivity">
+            <option value="normal">Sensibilité normale</option>
+            <option value="high">Sensibilité forte</option>
+          </select>
+        </div>
+
+        <div class="grid">
+          <button class="primary" id="launch">Lancer HIBOUX</button>
+          <button class="secondary" id="stop">Arrêter</button>
+        </div>
+      </section>
+
+      <div class="notice" id="compat">
+        Volume conseillé : environ 50 %. Phrase test conservée : <strong>“il fait chaud”</strong> = +20 points.
+      </div>
+
+      <section class="panel">
+        <div class="scoreline">
+          <div>
+            <div class="title">Score de vigilance</div>
+            <div class="score" id="score">0</div>
+          </div>
+          <div class="level" id="level">calme</div>
+        </div>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+      </section>
+
+      <section class="panel">
+        <div class="title">Mode écran noir</div>
+        <p class="small">
+          Une fois lancé, HIBOUX affiche un écran noir sans bordure. Pour revenir au menu :
+          <strong>4 appuis rapides</strong>.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="title">Journal discret</div>
+        <div class="log" id="log">En attente du lancement.</div>
+      </section>
+    </div>
+
+    <footer>Prototype local sans Firebase.</footer>
+  </section>
+</main>
 
 <script>
-let score=0,taps=0,callTimer,intv;
+const rules = [
+  {cat:"Phrase test", score:20, patterns:["il fait chaud"]},
+  {cat:"Isolement", score:8, patterns:["viens avec moi","suis moi","viens dehors","viens derriere","on sera tranquilles","on sera mieux la bas","viens seul","viens seule","viens a l ecart"]},
+  {cat:"Secret", score:14, patterns:["n en parle pas","ne dis rien","garde ca pour toi","c est entre nous","personne n a besoin de savoir","ce sera notre secret"]},
+  {cat:"Téléphone", score:24, patterns:["range ton telephone","eteins ton telephone","coupe ton telephone","donne moi ton telephone","coupe le gps","desactive la localisation","ne reponds pas"]},
+  {cat:"Proches", score:18, patterns:["tes parents n ont pas besoin de savoir","ne previens personne","ne les appelle pas","ignore ta mere","ignore ton pere","tu leur diras demain"]},
+  {cat:"Pression", score:8, patterns:["fais moi confiance","crois moi","arrete de stresser","detends toi","tu te fais des idees","ne sois pas parano"]},
+  {cat:"Rencontre internet", score:22, patterns:["j ai menti sur mon age","je suis plus vieux","je ne ressemble pas aux photos","faux profil","reste quand meme","donne moi une chance"]},
+  {cat:"Menace indirecte", score:45, patterns:["fais attention","reflechis bien","ce serait dommage","evite les ennuis","ne me mets pas en colere","ne complique pas les choses"]},
+  {cat:"Menace directe", score:110, patterns:["ne crie pas","tais toi","ne bouge pas","fais ce que je dis","tu n as pas le choix","pas un mot","personne ne viendra","personne ne t entendra"]}
+];
 
-function launch(){
- document.getElementById('stealth').style.display='block';
+let score = 0;
+let listening = false;
+let recognition = null;
+let stealthTaps = 0;
+let stealthTapTimer = null;
+let triggers = {sms:false, call:false, urgent:false};
+let audioCtx = null;
+let ringInterval = null;
+let callTimerInterval = null;
+let callSeconds = 0;
+let finalRiskLabel = "calme";
+let logLines = [];
+
+const $ = id => document.getElementById(id);
+
+function log(msg){
+  const time = new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  logLines.unshift(`[${time}] ${msg}`);
+  $("log").textContent = logLines.slice(0,8).join("\\n");
 }
 
-document.getElementById('stealth').onclick=()=>{
- taps++;
- setTimeout(()=>taps=0,1200);
- if(taps>=4){
-   document.getElementById('stealth').style.display='none';
-   taps=0;
- }
+function norm(s){
+  return String(s || "").toLowerCase()
+    .normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")
+    .replace(/[’']/g," ")
+    .replace(/[^\\p{L}\\p{N}\\s]/gu," ")
+    .replace(/\\s+/g," ")
+    .trim();
 }
 
-function addHot(){
- score+=20;
- document.getElementById('score').textContent=score;
- if(score>=80) incoming();
+function thresholds(){
+  return $("sensitivity").value === "high"
+    ? {sms:30, call:60, urgent:110}
+    : {sms:40, call:80, urgent:140};
 }
 
-function incoming(){
- document.getElementById('call').style.display='block';
- setTimeout(answerFlow,1500);
+function setStatus(txt, active=false){
+  $("status").textContent = txt;
+  $("status").classList.toggle("active", active);
 }
 
-function answerFlow(){
- let u1=new SpeechSynthesisUtterance("Allo ?");
- u1.lang='fr-FR';
- speechSynthesis.speak(u1);
-
- setTimeout(()=>{
-  let u2=new SpeechSynthesisUtterance("Allo ma chérie ?");
-  u2.lang='fr-FR';
-  speechSynthesis.speak(u2);
- },2500);
-
- setTimeout(()=>{
-  let u3=new SpeechSynthesisUtterance("Tu m'entends ?");
-  u3.lang='fr-FR';
-  speechSynthesis.speak(u3);
- },5000);
-
- setTimeout(()=>{
-   hiboux();
-   startTimer();
- },9000);
+function ensureAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
 }
 
-function hiboux(){
- const msg="Bonjour. Ceci est un message de sécurité HIBOU. La situation analysée devient inquiétante. Je répète. La situation analysée devient inquiétante. Je répète. La situation analysée devient inquiétante. Quittez calmement cette situation et rejoignez un lieu fréquenté.";
- let u=new SpeechSynthesisUtterance(msg);
- u.lang='fr-FR';
- u.pitch=0.7;
- speechSynthesis.speak(u);
+function tone(freq=740,duration=130){
+  try{
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = freq;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.15, audioCtx.currentTime+.02);
+    gain.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime+duration/1000);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration/1000 + .03);
+  }catch(e){}
 }
 
-function startTimer(){
- let s=0;
- intv=setInterval(()=>{
-  s++;
-  let m=String(Math.floor(s/60)).padStart(2,'0');
-  let ss=String(s%60).padStart(2,'0');
-  document.getElementById('timer').textContent=m+":"+ss;
- },1000);
+function startRing(){
+  stopRing();
+  tone(720); setTimeout(()=>tone(920),180);
+  ringInterval = setInterval(()=>{ tone(720); setTimeout(()=>tone(920),180); }, 1400);
 }
 
-function hangup(){
- clearInterval(intv);
- speechSynthesis.cancel();
- document.getElementById('call').style.display='none';
- document.getElementById('stealth').style.display='block';
+function stopRing(){
+  if(ringInterval){ clearInterval(ringInterval); ringInterval = null; }
 }
 
-window.addHot=addHot;
+function updateUI(){
+  $("score").textContent = score;
+  $("fill").style.width = Math.min(100, score / 2.2) + "%";
+  const level = $("level");
+  const fill = $("fill");
+
+  if(score < 30){
+    level.textContent = "calme"; fill.style.background = "var(--green)"; finalRiskLabel = "calme";
+  } else if(score < 70){
+    level.textContent = "gênante"; fill.style.background = "var(--gold)"; finalRiskLabel = "gênante";
+  } else if(score < 120){
+    level.textContent = "inquiétante"; fill.style.background = "var(--orange)"; finalRiskLabel = "inquiétante";
+  } else {
+    level.textContent = "urgente"; fill.style.background = "var(--red)"; finalRiskLabel = "urgente";
+  }
+}
+
+function analyzeText(text){
+  const clean = norm(text);
+  let foundScore = 0;
+  let foundCats = [];
+
+  for(const rule of rules){
+    for(const p of rule.patterns){
+      if(clean.includes(norm(p))){
+        foundScore += rule.score;
+        foundCats.push(rule.cat + " +" + rule.score);
+        break;
+      }
+    }
+  }
+
+  if(foundScore > 0){
+    score += foundScore;
+    log("Détection : " + foundCats.join(", "));
+  } else {
+    score = Math.max(0, score - 1);
+  }
+
+  updateUI();
+  checkTriggers();
+}
+
+function checkTriggers(){
+  const t = thresholds();
+
+  if(score >= t.sms && !triggers.sms){
+    triggers.sms = true;
+    showSms();
+  }
+
+  if(score >= t.call && !triggers.call){
+    triggers.call = true;
+    setTimeout(showCall, 900);
+  }
+
+  if(score >= t.urgent && !triggers.urgent){
+    triggers.urgent = true;
+    finalRiskLabel = "urgente";
+  }
+}
+
+function showSms(){
+  const who = $("caller").value === "PAPA" ? "Papa" : "Maman";
+  $("smsWho").textContent = who;
+  $("sms").classList.add("show");
+  log("SMS simulé déclenché.");
+  setTimeout(()=>$("sms").classList.remove("show"), 5200);
+}
+
+function showCall(){
+  ensureAudio();
+  const who = $("caller").value;
+  $("callerName").textContent = who;
+  $("avatar").textContent = who === "PAPA" ? "👨" : "👩";
+  $("incomingText").textContent = "appel entrant";
+  $("timer").textContent = "00:00";
+  $("callActions").style.display = "flex";
+  $("hangArea").classList.remove("show");
+  $("call").classList.add("show");
+  log("Appel " + who + " déclenché.");
+  startRing();
+}
+
+function closeCall(returnStealth=true){
+  stopRing();
+  stopCallTimer();
+  try{ speechSynthesis.cancel(); }catch(e){}
+  $("call").classList.remove("show");
+  $("hangArea").classList.remove("show");
+  $("callActions").style.display = "flex";
+  if(returnStealth && listening) enterStealth();
+}
+
+function startCallTimer(){
+  stopCallTimer();
+  callSeconds = 0;
+  $("timer").textContent = "00:00";
+  callTimerInterval = setInterval(()=>{
+    callSeconds++;
+    const m = String(Math.floor(callSeconds/60)).padStart(2,"0");
+    const s = String(callSeconds%60).padStart(2,"0");
+    $("timer").textContent = `${m}:${s}`;
+  },1000);
+}
+
+function stopCallTimer(){
+  if(callTimerInterval){
+    clearInterval(callTimerInterval);
+    callTimerInterval = null;
+  }
+}
+
+function speak(text, opts={}){
+  return new Promise(resolve=>{
+    try{
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "fr-FR";
+      u.rate = opts.rate || .94;
+      u.pitch = opts.pitch || 1;
+      u.volume = opts.volume || 1;
+      u.onend = resolve;
+      u.onerror = resolve;
+      speechSynthesis.speak(u);
+    }catch(e){ resolve(); }
+  });
+}
+
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+function hibouxMessage(){
+  if(finalRiskLabel === "gênante"){
+    return "Message HIBOUX. La situation semble devenir gênante. Gardez l’appel actif. Prenez doucement de la distance. Rejoignez un endroit plus fréquenté.";
+  }
+  if(finalRiskLabel === "inquiétante"){
+    return "Message HIBOUX. La situation analysée devient inquiétante. Quittez calmement l’échange. Rejoignez un endroit fréquenté. Contactez une personne de confiance.";
+  }
+  if(finalRiskLabel === "urgente"){
+    return "Message HIBOUX. La situation estimée est urgente. Éloignez-vous maintenant. Rejoignez un lieu fréquenté. Contactez immédiatement une personne de confiance.";
+  }
+  return "Message HIBOUX. Aucun danger clair n’est estimé. Faites confiance à votre ressenti. Vous pouvez utiliser cet appel pour prendre de la distance.";
+}
+
+async function answerCall(){
+  stopRing();
+  $("incomingText").textContent = "appel en cours";
+  $("callActions").style.display = "none";
+  $("hangArea").classList.add("show");
+  startCallTimer();
+
+  speechSynthesis.cancel();
+
+  const isPapa = $("caller").value === "PAPA";
+  const familyIntro = isPapa
+    ? ["Allô ?", "Allô ma chérie ?", "Tu m’entends ?"]
+    : ["Allô ?", "Allô ma chérie ?", "Tu m’entends ?"];
+
+  for(const line of familyIntro){
+    await speak(line, {rate:.92, pitch:isPapa ? .82 : 1.12});
+    await wait(1500);
+  }
+
+  await wait(1800);
+
+  const msg = hibouxMessage();
+
+  for(let i=0;i<3;i++){
+    await speak(msg, {rate:.90, pitch:.72});
+    if(i<2){
+      await wait(900);
+      await speak("Je répète.", {rate:.90, pitch:.72});
+      await wait(500);
+    }
+  }
+
+  log("Message HIBOUX répété 3 fois.");
+}
+
+function enterStealth(){
+  $("stealth").classList.add("active");
+  stealthTaps = 0;
+}
+
+function exitStealth(){
+  $("stealth").classList.remove("active");
+  stealthTaps = 0;
+  $("tapHint").classList.remove("show");
+}
+
+function handleStealthTap(){
+  stealthTaps++;
+  $("tapHint").textContent = `${stealthTaps}/4`;
+  $("tapHint").classList.add("show");
+
+  clearTimeout(stealthTapTimer);
+  stealthTapTimer = setTimeout(()=>{
+    stealthTaps = 0;
+    $("tapHint").classList.remove("show");
+  }, 1300);
+
+  if(stealthTaps >= 4){
+    clearTimeout(stealthTapTimer);
+    exitStealth();
+  }
+}
+
+function initSpeech(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition) return null;
+
+  const rec = new SpeechRecognition();
+  rec.lang = "fr-FR";
+  rec.continuous = true;
+  rec.interimResults = false;
+
+  rec.onstart = ()=>{
+    setStatus("écoute", true);
+    log("Micro activé.");
+  };
+
+  rec.onresult = (event)=>{
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      if(event.results[i].isFinal){
+        const heard = event.results[i][0].transcript;
+        log("Entendu : " + heard);
+        analyzeText(heard);
+      }
+    }
+  };
+
+  rec.onerror = (e)=>{
+    log("Micro interrompu : " + (e.error || "erreur"));
+    setStatus("veille", true);
+  };
+
+  rec.onend = ()=>{
+    if(listening){
+      try{ rec.start(); }catch(e){}
+    }
+  };
+
+  return rec;
+}
+
+async function requestMicFallback(){
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      stream.getTracks().forEach(t=>t.stop());
+      log("Autorisation micro accordée.");
+      return true;
+    }catch(e){
+      log("Autorisation micro refusée.");
+      return false;
+    }
+  }
+  return false;
+}
+
+async function launch(){
+  ensureAudio();
+  listening = true;
+  score = 0;
+  triggers = {sms:false, call:false, urgent:false};
+  logLines = [];
+  updateUI();
+  setStatus("veille", true);
+  log("HIBOUX lancé.");
+
+  await requestMicFallback();
+
+  if(!recognition) recognition = initSpeech();
+
+  if(recognition){
+    try{
+      recognition.start();
+    }catch(e){
+      log("Relance micro en cours.");
+    }
+  } else {
+    $("compat").innerHTML = "Micro autorisé, mais transcription vocale Web non disponible dans ce navigateur. Sur iPhone, Bluefy/Safari peuvent limiter l’analyse automatique selon les versions.";
+    log("Transcription Web non disponible.");
+  }
+
+  enterStealth();
+}
+
+function stopAll(){
+  listening = false;
+  try{ recognition && recognition.stop(); }catch(e){}
+  closeCall(false);
+  exitStealth();
+  setStatus("prêt", false);
+  log("HIBOUX arrêté.");
+}
+
+$("launch").onclick = launch;
+$("stop").onclick = stopAll;
+$("stealth").onclick = handleStealthTap;
+$("decline").onclick = () => closeCall(true);
+$("answer").onclick = answerCall;
+$("hang").onclick = () => closeCall(true);
+
+updateUI();
 </script>
-</body></html>
+</body>
+</html>

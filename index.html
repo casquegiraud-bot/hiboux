@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOUX V4.1 — Détection sécurisée</title>
+  <title>HIBOUX V4.2 — Anti faux appel</title>
   <style>
     :root{--bg:#07111f;--bg2:#0d2038;--text:#f8fbff;--muted:#b7c6da;--line:rgba(255,255,255,.14);--blue:#7dd3fc;--green:#86efac;--gold:#facc15;--orange:#fb923c;--red:#fb7185;--shadow:0 24px 70px rgba(0,0,0,.38)}
     *{box-sizing:border-box}
@@ -25,7 +25,7 @@
     .notice{padding:14px;border-radius:20px;background:rgba(125,211,252,.10);border:1px solid rgba(125,211,252,.22);color:#d7e8f6;font-size:13px;line-height:1.4;margin-bottom:14px}
     .scoreline{display:flex;align-items:center;justify-content:space-between;gap:12px}.title{font-weight:850;margin-bottom:10px}.score{font-size:38px;font-weight:950;letter-spacing:-1px}
     .level{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px 10px;background:rgba(255,255,255,.07)}.bar{height:12px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:10px}.fill{height:100%;width:0%;background:var(--green);transition:.25s}
-    .small{font-size:12.5px;color:var(--muted);line-height:1.4}.log{min-height:86px;max-height:155px;overflow:auto;white-space:pre-wrap;color:#dfefff;font-size:12.5px;line-height:1.38;opacity:.9}
+    .small{font-size:12.5px;color:var(--muted);line-height:1.4}.log{min-height:96px;max-height:165px;overflow:auto;white-space:pre-wrap;color:#dfefff;font-size:12.5px;line-height:1.38;opacity:.9}
     .stealth{position:fixed;inset:0;z-index:80;display:none;background:#000;border:none!important;outline:none!important;box-shadow:none!important;color:transparent;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}.stealth.active{display:block}
     .tapHint{position:absolute;top:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.18);font-size:11px;opacity:0;transition:.15s}.tapHint.show{opacity:1}.panicHint{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.08);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
     .sms{position:fixed;left:15px;right:15px;top:calc(env(safe-area-inset-top) + 14px);z-index:120;display:none;padding:14px 15px;border-radius:22px;background:rgba(250,250,250,.97);color:#111827;box-shadow:0 16px 38px rgba(0,0,0,.35);animation:drop .25s ease-out;max-width:430px;margin:auto}.sms.show{display:block}.sms strong{display:block;margin-bottom:3px}.sms span{color:#4b5563;font-size:13px}@keyframes drop{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
@@ -46,72 +46,72 @@
     <div class="hangArea" id="hangArea"><button class="hangBtn" id="hang">📞</button><div class="quiet">appel en cours</div></div>
   </section>
   <section class="stealth" id="stealth"><div class="tapHint" id="tapHint">1/4</div><div class="panicHint">4 taps menu · 6 taps arrêt total</div></section>
-
-  <header><div class="brand"><div class="logo">🦉</div><div><h1>HIBOUX V4.1</h1><div class="sub">détection sécurisée</div></div></div><div class="pill" id="status">prêt</div></header>
-
+  <header><div class="brand"><div class="logo">🦉</div><div><h1>HIBOUX V4.2</h1><div class="sub">anti faux appel</div></div></div><div class="pill" id="status">prêt</div></header>
   <div class="content">
     <section class="hero">
-      <div class="owl">🦉</div><h2>Mode protection discrète</h2>
-      <p>Cette version évite les faux appels : une phrase banale ne suffit plus. HIBOUX attend une accumulation cohérente de signaux.</p>
+      <div class="owl">🦉</div><h2>Détection verrouillée</h2>
+      <p>Une conversation normale ne déclenche plus l’appel. HIBOUX exige plusieurs signaux forts et cohérents.</p>
       <div class="grid"><select id="caller"><option value="MAMAN">Appel de MAMAN</option><option value="PAPA">Appel de PAPA</option></select><select id="sensitivity"><option value="normal">Sensibilité normale</option><option value="high">Sensibilité forte</option></select></div>
       <div class="grid"><button class="primary" id="launch">Lancer HIBOUX</button><button class="stopBtn" id="panicStop">ARRÊT TOTAL</button></div>
     </section>
-
-    <div class="notice" id="compat">
-      Phrase test : <strong>“il fait chaud”</strong> = +20. L’appel ne part qu’après <strong>4 détections test</strong> ou plusieurs catégories à risque.
-    </div>
-
+    <div class="notice" id="compat">Test : <strong>“il fait chaud”</strong> doit être entendu <strong>4 fois</strong> pour appeler. Les phrases normales sont ignorées.</div>
     <section class="panel"><div class="scoreline"><div><div class="title">Score de vigilance</div><div class="score" id="score">0</div></div><div class="level" id="level">calme</div></div><div class="bar"><div class="fill" id="fill"></div></div></section>
-
-    <section class="panel"><div class="title">Filtre anti-faux positif</div><p class="small">Une phrase comme “salut ça va, je suis content de te voir” ne contient aucune catégorie sensible et ne doit pas déclencher d’appel.</p></section>
+    <section class="panel"><div class="title">Verrou anti-erreur</div><p class="small">Appel seulement si : 4 fois “il fait chaud”, ou menace directe, ou combinaison complète Isolement + Secret/Proches + Téléphone/Pression.</p></section>
     <section class="panel"><div class="title">Journal discret</div><div class="log" id="log">En attente du lancement.</div></section>
-  </div>
-  <footer>Prototype local sans Firebase.</footer>
+  </div><footer>Prototype local sans Firebase.</footer>
 </section></main>
 
 <script>
 const rules = [
-  {cat:"TEST", score:20, risk:false, patterns:["il fait chaud"]},
-  {cat:"Isolement", score:8, risk:true, patterns:["viens avec moi","suis moi","viens dehors","viens derriere","on sera tranquilles","on sera mieux la bas","viens seul","viens seule","viens a l ecart"]},
-  {cat:"Secret", score:14, risk:true, patterns:["n en parle pas","ne dis rien","garde ca pour toi","c est entre nous","personne n a besoin de savoir","ce sera notre secret"]},
-  {cat:"Telephone", score:24, risk:true, patterns:["range ton telephone","eteins ton telephone","coupe ton telephone","donne moi ton telephone","coupe le gps","desactive la localisation","ne reponds pas"]},
-  {cat:"Proches", score:18, risk:true, patterns:["tes parents n ont pas besoin de savoir","ne previens personne","ne les appelle pas","ignore ta mere","ignore ton pere","tu leur diras demain"]},
-  {cat:"Pression", score:8, risk:true, patterns:["fais moi confiance","crois moi","arrete de stresser","detends toi","tu te fais des idees","ne sois pas parano"]},
-  {cat:"Rencontre internet", score:22, risk:true, patterns:["j ai menti sur mon age","je suis plus vieux","je ne ressemble pas aux photos","faux profil","reste quand meme","donne moi une chance"]},
-  {cat:"Menace indirecte", score:45, risk:true, patterns:["fais attention","reflechis bien","ce serait dommage","evite les ennuis","ne me mets pas en colere","ne complique pas les choses"]},
-  {cat:"Menace directe", score:110, risk:true, patterns:["ne crie pas","tais toi","ne bouge pas","fais ce que je dis","tu n as pas le choix","pas un mot","personne ne viendra","personne ne t entendra"]}
+  {cat:"TEST", score:20, kind:"test", patterns:["il fait chaud"]},
+  {cat:"Isolement", score:8, kind:"risk", patterns:["viens avec moi","suis moi","viens dehors","viens derriere","on sera tranquilles","on sera mieux la bas","viens seul","viens seule","viens a l ecart"]},
+  {cat:"Secret", score:14, kind:"risk", patterns:["n en parle pas","ne dis rien","garde ca pour toi","c est entre nous","personne n a besoin de savoir","ce sera notre secret"]},
+  {cat:"Telephone", score:24, kind:"risk", patterns:["range ton telephone","eteins ton telephone","coupe ton telephone","donne moi ton telephone","coupe le gps","desactive la localisation","ne reponds pas"]},
+  {cat:"Proches", score:18, kind:"risk", patterns:["tes parents n ont pas besoin de savoir","ne previens personne","ne les appelle pas","ignore ta mere","ignore ton pere","tu leur diras demain"]},
+  {cat:"Pression", score:8, kind:"risk", patterns:["fais moi confiance","crois moi","arrete de stresser","detends toi","tu te fais des idees","ne sois pas parano"]},
+  {cat:"Rencontre internet", score:22, kind:"risk", patterns:["j ai menti sur mon age","je suis plus vieux","je ne ressemble pas aux photos","faux profil","reste quand meme","donne moi une chance"]},
+  {cat:"Menace indirecte", score:45, kind:"risk", patterns:["fais attention","reflechis bien","ce serait dommage","evite les ennuis","ne me mets pas en colere","ne complique pas les choses"]},
+  {cat:"Menace directe", score:110, kind:"critical", patterns:["ne crie pas","tais toi","ne bouge pas","fais ce que je dis","tu n as pas le choix","pas un mot","personne ne viendra","personne ne t entendra"]}
 ];
 
 let score=0,listening=false,recognition=null,audioCtx=null,ringInterval=null,callTimerInterval=null,micStream=null;
 let stealthTaps=0,stealthTapTimer=null,callSeconds=0,finalRiskLabel="calme",forceStopped=false;
 let triggers={sms:false,call:false,urgent:false};
-let logLines=[], detections=0, testHits=0, riskHits=0;
+let logLines=[], testHits=0, criticalHits=0;
 let riskCats = new Set();
 
 const $=id=>document.getElementById(id);
 
-function log(msg){const time=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});logLines.unshift(`[${time}] ${msg}`);$("log").textContent=logLines.slice(0,10).join("\n");}
+function log(msg){const time=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});logLines.unshift(`[${time}] ${msg}`);$("log").textContent=logLines.slice(0,11).join("\n");}
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g," ").replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();}
-function thresholds(){return $("sensitivity").value==="high"?{sms:60,call:80,urgent:140}:{sms:70,call:100,urgent:160};}
 function setStatus(txt,mode="normal"){$("status").textContent=txt;$("status").classList.toggle("active",mode==="active");$("status").classList.toggle("danger",mode==="danger");}
 function updateUI(){
-  $("score").textContent=score;$("fill").style.width=Math.min(100,score/2.4)+"%";
+  $("score").textContent=score;$("fill").style.width=Math.min(100,score/2.6)+"%";
   const level=$("level"), fill=$("fill");
   if(score<40){level.textContent="calme";fill.style.background="var(--green)";finalRiskLabel="calme";}
   else if(score<90){level.textContent="gênante";fill.style.background="var(--gold)";finalRiskLabel="gênante";}
   else if(score<140){level.textContent="inquiétante";fill.style.background="var(--orange)";finalRiskLabel="inquiétante";}
   else{level.textContent="urgente";fill.style.background="var(--red)";finalRiskLabel="urgente";}
 }
-function shouldTriggerSms(){return (testHits>=2) || (riskHits>=2 && riskCats.size>=1 && score>=thresholds().sms);}
+
+function hasCompleteRiskScenario(){
+  const hasIsolation = riskCats.has("Isolement");
+  const hasSecret = riskCats.has("Secret") || riskCats.has("Proches");
+  const hasControl = riskCats.has("Telephone") || riskCats.has("Pression");
+  const hasExtra = riskCats.has("Menace indirecte") || riskCats.has("Rencontre internet");
+  // Need a coherent trio. This prevents casual false positives.
+  return (hasIsolation && hasSecret && hasControl) || (hasIsolation && hasSecret && hasExtra);
+}
+function shouldTriggerSms(){
+  return testHits >= 2 || hasCompleteRiskScenario() || criticalHits >= 1;
+}
 function shouldTriggerCall(){
-  // Test phrase must be repeated 4 times.
-  if(testHits>=4) return true;
-  // Real risk needs multiple signals, not one harmless recognition artifact.
-  if(riskHits>=3 && riskCats.size>=2 && score>=thresholds().call) return true;
-  // Direct menace can trigger faster but still requires a risk category.
-  if(riskCats.has("Menace directe") && score>=120) return true;
+  if(testHits >= 4) return true;
+  if(criticalHits >= 1) return true;
+  if(hasCompleteRiskScenario() && score >= 55) return true;
   return false;
 }
+
 function ensureAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();}catch(e){}}
 function tone(freq=740,duration=130){try{ensureAudio();const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.frequency.value=freq;osc.type="sine";gain.gain.setValueAtTime(.0001,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.15,audioCtx.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration/1000);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+duration/1000+.03);}catch(e){}}
 function startRing(){stopRing();tone(720);setTimeout(()=>tone(920),180);ringInterval=setInterval(()=>{tone(720);setTimeout(()=>tone(920),180);},1400);}
@@ -130,44 +130,45 @@ function hardStop(){
   forceStopped=true;stopMicroOnly();stopRing();stopCallTimer();try{speechSynthesis.cancel();}catch(e){}
   try{if(audioCtx&&audioCtx.state!=="closed")audioCtx.close();}catch(e){} audioCtx=null;
   $("call").classList.remove("show");$("hangArea").classList.remove("show");$("callActions").style.display="flex";$("sms").classList.remove("show");$("stealth").classList.remove("active");
-  stealthTaps=0;score=0;triggers={sms:false,call:false,urgent:false};detections=0;testHits=0;riskHits=0;riskCats.clear();updateUI();setStatus("arrêté","danger");log("ARRÊT TOTAL effectué.");
+  stealthTaps=0;score=0;triggers={sms:false,call:false,urgent:false};testHits=0;criticalHits=0;riskCats.clear();updateUI();setStatus("arrêté","danger");log("ARRÊT TOTAL effectué.");
 }
+
 function analyzeText(text){
   const clean=norm(text);
-  if(clean.length<4){return;}
+  if(clean.length<5){return;}
   let foundScore=0, foundCats=[];
   for(const rule of rules){
     for(const p of rule.patterns){
       if(clean.includes(norm(p))){
-        foundScore+=rule.score;
+        foundScore += rule.score;
         foundCats.push(rule.cat+" +"+rule.score);
-        detections++;
-        if(rule.cat==="TEST") testHits++;
-        if(rule.risk){riskHits++; riskCats.add(rule.cat);}
+        if(rule.kind==="test") testHits++;
+        if(rule.kind==="critical") criticalHits++;
+        if(rule.kind==="risk") riskCats.add(rule.cat);
         break;
       }
     }
   }
+
   if(foundScore>0){
-    score+=foundScore;
-    log("Détection : "+foundCats.join(", ")+" | test="+testHits+" risque="+riskHits+" cats="+riskCats.size);
+    score += foundScore;
+    log("Détection : "+foundCats.join(", ")+" | test="+testHits+" critical="+criticalHits+" cats=["+[...riskCats].join("/") + "]");
   } else {
-    log("Phrase neutre ignorée.");
+    log("Neutre ignoré : “"+text.slice(0,55)+"”");
   }
-  updateUI();checkTriggers();
+  updateUI(); checkTriggers();
 }
 function checkTriggers(){
-  const t=thresholds();
   if(shouldTriggerSms()&&!triggers.sms){triggers.sms=true;showSms();}
   if(shouldTriggerCall()&&!triggers.call){triggers.call=true;setTimeout(showCall,900);}
-  if(score>=t.urgent&&!triggers.urgent){triggers.urgent=true;finalRiskLabel="urgente";}
+  if(score>=140&&!triggers.urgent){triggers.urgent=true;finalRiskLabel="urgente";}
 }
 function showSms(){const who=$("caller").value==="PAPA"?"Papa":"Maman";$("smsWho").textContent=who;$("sms").classList.add("show");log("SMS simulé déclenché.");setTimeout(()=>$("sms").classList.remove("show"),5200);}
 function showCall(){ensureAudio();const who=$("caller").value;$("callerName").textContent=who;$("avatar").textContent=who==="PAPA"?"👨":"👩";$("incomingText").textContent="appel entrant";$("timer").textContent="00:00";$("callActions").style.display="flex";$("hangArea").classList.remove("show");$("call").classList.add("show");log("Appel "+who+" déclenché.");startRing();}
 function closeCall(returnStealth=true){stopRing();stopCallTimer();try{speechSynthesis.cancel();}catch(e){}$("call").classList.remove("show");$("hangArea").classList.remove("show");$("callActions").style.display="flex";if(returnStealth&&listening)enterStealth();}
 function speak(text,opts={}){return new Promise(resolve=>{try{const u=new SpeechSynthesisUtterance(text);u.lang="fr-FR";u.rate=opts.rate||.94;u.pitch=opts.pitch||1;u.volume=opts.volume||1;u.onend=resolve;u.onerror=resolve;speechSynthesis.speak(u);}catch(e){resolve();}});}
 function wait(ms){return new Promise(r=>setTimeout(r,ms));}
-function hibouxMessage(){if(finalRiskLabel==="gênante")return"Message HIBOUX. La situation semble devenir gênante. Gardez l’appel actif. Prenez doucement de la distance. Rejoignez un endroit plus fréquenté.";if(finalRiskLabel==="inquiétante")return"Message HIBOUX. La situation analysée devient inquiétante. Quittez calmement l’échange. Rejoignez un endroit fréquenté. Contactez une personne de confiance.";if(finalRiskLabel==="urgente")return"Message HIBOUX. La situation estimée est urgente. Éloignez-vous maintenant. Rejoignez un lieu fréquenté. Contactez immédiatement une personne de confiance.";return"Message HIBOUX. Aucun danger clair n’est estimé. Faites confiance à votre ressenti. Vous pouvez utiliser cet appel pour prendre de la distance.";}
+function hibouxMessage(){if(finalRiskLabel==="gênante")return"Message HIBOUX. La situation semble devenir gênante. Gardez l’appel actif. Prenez doucement de la distance. Rejoignez un endroit plus fréquenté.";if(finalRiskLabel==="inquiétante")return"Message HIBOUX. La situation analysée devient inquiétante. Quittez calmement l’échange. Rejoignez un endroit fréquenté. Contactez une personne de confiance.";if(finalRiskLabel==="urgente")return"Message HIBOUX. La situation estimée est urgente. Éloignez-vous maintenant. Rejoignez un lieu fréquenté. Contactez immédiatement une personne de confiance.";return"Message HIBOUX. Faites confiance à votre ressenti. Vous pouvez utiliser cet appel pour prendre de la distance.";}
 async function answerCall(){stopRing();$("incomingText").textContent="appel en cours";$("callActions").style.display="none";$("hangArea").classList.add("show");startCallTimer();speechSynthesis.cancel();const isPapa=$("caller").value==="PAPA";for(const line of ["Allô ?","Allô ma chérie ?","Tu m’entends ?"]){await speak(line,{rate:.92,pitch:isPapa?.82:1.12});await wait(1500);}await wait(1800);const msg=hibouxMessage();for(let i=0;i<3;i++){await speak(msg,{rate:.90,pitch:.72});if(i<2){await wait(900);await speak("Je répète.",{rate:.90,pitch:.72});await wait(500);}}log("Message HIBOUX répété 3 fois.");}
 function enterStealth(){$("stealth").classList.add("active");stealthTaps=0;}
 function exitStealth(){$("stealth").classList.remove("active");stealthTaps=0;$("tapHint").classList.remove("show");}
@@ -184,7 +185,7 @@ function initSpeech(){
 }
 async function requestMic(){if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){try{micStream=await navigator.mediaDevices.getUserMedia({audio:true});log("Autorisation micro accordée.");return true;}catch(e){log("Autorisation micro refusée.");return false;}}return false;}
 async function launch(){
-  hardStop();forceStopped=false;ensureAudio();listening=true;score=0;triggers={sms:false,call:false,urgent:false};detections=0;testHits=0;riskHits=0;riskCats.clear();logLines=[];updateUI();setStatus("veille","active");log("HIBOUX lancé.");
+  hardStop();forceStopped=false;ensureAudio();listening=true;score=0;triggers={sms:false,call:false,urgent:false};testHits=0;criticalHits=0;riskCats.clear();logLines=[];updateUI();setStatus("veille","active");log("HIBOUX lancé.");
   await requestMic();
   recognition=initSpeech();
   if(recognition){try{recognition.start();}catch(e){log("Relance micro en cours.");}}

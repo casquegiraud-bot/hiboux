@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC4 anti-veille</title>
+  <title>HIBOU - SC5 anti-veille + détection restaurée</title>
   <style>
     :root{
-      --bg:#070914;
-      --card:#101629;
       --text:#f5f7ff;
       --muted:#a9b3d1;
       --green:#2dff88;
@@ -72,9 +70,9 @@
       left:12px;
       right:12px;
       bottom:12px;
-      max-height:52vh;
+      max-height:54vh;
       overflow:auto;
-      background:rgba(10,14,28,.96);
+      background:rgba(10,14,28,.97);
       color:white;
       border:1px solid rgba(255,255,255,.18);
       border-radius:18px;
@@ -170,22 +168,23 @@
       </svg>
 
       <h1>HIBOU</h1>
-      <div class="version">Version SC4 — anti-veille</div>
-      <div class="baseline">Même moteur SC3, avec demande de maintien d’écran actif. L’écran reste noir, mais le téléphone ne doit plus partir en veille si le navigateur accepte l’anti-veille.</div>
+      <div class="version">Version SC5 — anti-veille + détection restaurée</div>
+      <div class="baseline">Correction SC4 : l’anti-veille est conservé, mais la reconnaissance vocale n’est plus relancée en boucle. Le moteur SC3 est restauré.</div>
       <button id="activateBtn">Activer HIBOU</button>
-      <div class="mini">Important : à tester en HTTPS / GitHub Pages / Netlify. Le Wake Lock n’est pas garanti dans tous les navigateurs iPhone.</div>
+      <div class="mini">Écran noir total après activation. Debug : 4 tapes en bas à droite.</div>
     </div>
   </section>
 
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC4 — panneau test</div>
+      <div class="debugTitle">HIBOU SC5 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
         <button id="injectBtn">Injecter 4 phrases</button>
         <button id="wakeBtn">Réactiver anti-veille</button>
+        <button id="restartMicBtn">Relancer micro</button>
         <button id="stopBtn">Stop HIBOU</button>
       </div>
       <div id="debugTranscript"></div>
@@ -238,6 +237,8 @@ const TOTAL_PHRASES = SENSITIVE_GROUPS.reduce((sum,g)=>sum+g.examples.length,0);
 
 let recognition;
 let active = false;
+let recognitionRunning = false;
+let restartingMic = false;
 let callTriggered = false;
 let transcriptArchive = [];
 let detectedGroups = new Set();
@@ -247,8 +248,6 @@ let tapCount = 0;
 let tapTimer = null;
 let ringTimer = null;
 let wakeLock = null;
-let keepAliveTimer = null;
-let audioCtx = null;
 
 const home = document.getElementById("home");
 const blackScreen = document.getElementById("blackScreen");
@@ -269,6 +268,7 @@ const hangupBtn = document.getElementById("hangupBtn");
 const forceCallBtn = document.getElementById("forceCallBtn");
 const injectBtn = document.getElementById("injectBtn");
 const wakeBtn = document.getElementById("wakeBtn");
+const restartMicBtn = document.getElementById("restartMicBtn");
 const stopBtn = document.getElementById("stopBtn");
 
 async function requestWakeLock(){
@@ -300,43 +300,10 @@ async function releaseWakeLock(){
   }catch(e){}
 }
 
-function startKeepAlive(){
-  stopKeepAlive();
-
-  // Petit heartbeat silencieux : aide certains navigateurs à garder la page vivante.
-  try{
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    audioCtx = audioCtx || new AudioContext();
-    if(audioCtx.state === "suspended") audioCtx.resume();
-  }catch(e){}
-
-  keepAliveTimer = setInterval(async () => {
-    if(active && !callTriggered){
-      if(!wakeLock) await requestWakeLock();
-      if(recognition){
-        // Relance douce si le navigateur a coupé la reconnaissance.
-        try{
-          if(document.visibilityState === "visible") recognition.start();
-        }catch(e){}
-      }
-    }
-  }, 15000);
-}
-
-function stopKeepAlive(){
-  if(keepAliveTimer){
-    clearInterval(keepAliveTimer);
-    keepAliveTimer = null;
-  }
-}
-
 document.addEventListener("visibilitychange", async () => {
   if(document.visibilityState === "visible" && active && !callTriggered){
     await requestWakeLock();
-    try{
-      if(recognition) recognition.start();
-    }catch(e){}
-    updateDebug("Application revenue au premier plan : écoute relancée");
+    restartMicSoft("retour premier plan");
   }
 });
 
@@ -385,24 +352,23 @@ function analyze(text, source="final"){
 
 function handleHits(hits, spokenText, source){
   for(const hit of hits){
-    const key = hit.group.id + "|" + normalize(hit.phrase);
-    if(analyzedMemory.has(key)) {
-      detectedGroups.add(hit.group.id);
-      continue;
-    }
-
-    analyzedMemory.add(key);
+    const phraseKey = hit.group.id + "|" + normalize(hit.phrase);
     const alreadyGroup = detectedGroups.has(hit.group.id);
+
+    // On évite les doublons visuels, mais on n'empêche jamais le groupe d'être comptabilisé.
     detectedGroups.add(hit.group.id);
 
-    detectedItems.unshift({
-      label: hit.group.label,
-      phrase: hit.phrase,
-      spoken: spokenText,
-      source,
-      newGroup: !alreadyGroup,
-      time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})
-    });
+    if(!analyzedMemory.has(phraseKey)){
+      analyzedMemory.add(phraseKey);
+      detectedItems.unshift({
+        label: hit.group.label,
+        phrase: hit.phrase,
+        spoken: spokenText,
+        source,
+        newGroup: !alreadyGroup,
+        time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})
+      });
+    }
   }
 
   updateDebug(spokenText);
@@ -417,7 +383,7 @@ function updateDebug(lastText=""){
     Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>
     Seuil appel Maman : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b> catégories différentes<br>
     Anti-veille : <b>${wakeLock ? "actif" : "non actif / non supporté"}</b><br>
-    Visibilité page : ${document.visibilityState}<br>
+    Micro : <b>${recognitionRunning ? "actif" : "arrêté"}</b><br>
     Groupes détectés : ${Array.from(detectedGroups).join(", ") || "aucun"}
   `;
   debugTranscript.innerHTML = lastText ? `<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>` : "";
@@ -448,6 +414,11 @@ function setupRecognition(){
   rec.interimResults = true;
   rec.maxAlternatives = 3;
 
+  rec.onstart = () => {
+    recognitionRunning = true;
+    updateDebug("Micro démarré");
+  };
+
   rec.onresult = (event) => {
     let finalText = "";
     let interimText = "";
@@ -476,18 +447,40 @@ function setupRecognition(){
   };
 
   rec.onerror = (event) => {
-    debugStatus.textContent = "Erreur micro/reconnaissance : " + event.error;
+    updateDebug("Erreur micro/reconnaissance : " + event.error);
+    recognitionRunning = false;
+
+    // Pas de relance brutale en boucle : on laisse onend gérer proprement.
   };
 
   rec.onend = () => {
-    if(active && !callTriggered){
-      setTimeout(()=>{
-        try { rec.start(); } catch(e){}
-      }, 250);
+    recognitionRunning = false;
+    updateDebug("Micro arrêté");
+    if(active && !callTriggered && !restartingMic){
+      setTimeout(() => restartMicSoft("onend"), 450);
     }
   };
 
   return rec;
+}
+
+function restartMicSoft(reason="manuel"){
+  if(!active || callTriggered || restartingMic) return;
+  if(recognitionRunning) return;
+
+  restartingMic = true;
+  updateDebug("Relance micro : " + reason);
+
+  setTimeout(() => {
+    try{
+      if(!recognition) recognition = setupRecognition();
+      recognition.start();
+    }catch(e){
+      updateDebug("Relance micro impossible : " + e.message);
+    }finally{
+      setTimeout(()=>{ restartingMic = false; }, 600);
+    }
+  }, 250);
 }
 
 async function startHibou(){
@@ -500,18 +493,12 @@ async function startHibou(){
   blackScreen.classList.add("active");
 
   await requestWakeLock();
-  startKeepAlive();
-  updateDebug();
+  updateDebug("Démarrage HIBOU");
 
   try{
     recognition.start();
   }catch(e){
-    try{
-      recognition.stop();
-      setTimeout(()=>recognition.start(),350);
-    }catch(err){
-      alert("Micro bloqué. Ferme l’onglet, rouvre la page et autorise le micro.");
-    }
+    restartMicSoft("démarrage");
   }
 }
 
@@ -525,7 +512,6 @@ function stopRecognition(){
 async function triggerMomCall(){
   callTriggered = true;
   stopRecognition();
-  stopKeepAlive();
   await releaseWakeLock();
 
   blackScreen.classList.remove("active");
@@ -541,9 +527,7 @@ async function triggerMomCall(){
 function startRingtone(){
   try{
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const ctx = audioCtx || new AudioContext();
-    audioCtx = ctx;
-    if(ctx.state === "suspended") ctx.resume();
+    const ctx = new AudioContext();
 
     function beep(){
       const osc = ctx.createOscillator();
@@ -616,7 +600,6 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 async function resetToHome(){
   stopRingtone();
-  stopKeepAlive();
   await releaseWakeLock();
 
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -624,6 +607,8 @@ async function resetToHome(){
 
   active = false;
   callTriggered = false;
+  recognitionRunning = false;
+  restartingMic = false;
   transcriptArchive = [];
   detectedGroups.clear();
   detectedItems = [];
@@ -633,7 +618,7 @@ async function resetToHome(){
   callScreen.classList.remove("visible");
   blackScreen.classList.remove("active");
   home.style.display = "flex";
-  updateDebug();
+  updateDebug("Retour accueil");
 }
 
 activateBtn.addEventListener("click", startHibou);
@@ -661,9 +646,10 @@ injectBtn.addEventListener("click", () => {
 });
 
 wakeBtn.addEventListener("click", requestWakeLock);
+restartMicBtn.addEventListener("click", () => restartMicSoft("bouton debug"));
 stopBtn.addEventListener("click", resetToHome);
 
-updateDebug();
+updateDebug("Prêt");
 </script>
 </body>
 </html>

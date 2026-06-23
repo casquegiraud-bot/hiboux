@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC5 anti-veille + détection restaurée</title>
+  <title>HIBOU - SC6 Papa audio personnalisé</title>
   <style>
     :root{
       --text:#f5f7ff;
@@ -141,6 +141,8 @@
   </style>
 </head>
 <body>
+  <audio id="audioPapa" src="papa.m4a" preload="auto"></audio>
+
   <section id="home">
     <div class="homeCard">
       <svg class="owl" viewBox="0 0 240 240" aria-label="Hibou protecteur">
@@ -168,10 +170,10 @@
       </svg>
 
       <h1>HIBOU</h1>
-      <div class="version">Version SC5 — anti-veille + détection restaurée</div>
-      <div class="baseline">Correction SC4 : l’anti-veille est conservé, mais la reconnaissance vocale n’est plus relancée en boucle. Le moteur SC3 est restauré.</div>
+      <div class="version">Version SC6 — appel PAPA + voix personnalisée</div>
+      <div class="baseline">Base SC5 conservée. Après 4 catégories sensibles détectées, HIBOU déclenche un appel PAPA. Au décroché : lecture de papa.m4a, puis message HIBOU.</div>
       <button id="activateBtn">Activer HIBOU</button>
-      <div class="mini">Écran noir total après activation. Debug : 4 tapes en bas à droite.</div>
+      <div class="mini">Le fichier papa.m4a doit être au même niveau que index.html. Debug : 4 tapes en bas à droite.</div>
     </div>
   </section>
 
@@ -195,8 +197,8 @@
   <section id="callScreen">
     <div class="callTop">
       <div class="incoming" id="callModeText">appel entrant</div>
-      <div class="avatar">👩</div>
-      <div class="caller">Maman</div>
+      <div class="avatar">👨</div>
+      <div class="caller">Papa</div>
       <div class="callState" id="callState">Appel mobile</div>
     </div>
 
@@ -270,6 +272,7 @@ const injectBtn = document.getElementById("injectBtn");
 const wakeBtn = document.getElementById("wakeBtn");
 const restartMicBtn = document.getElementById("restartMicBtn");
 const stopBtn = document.getElementById("stopBtn");
+const audioPapa = document.getElementById("audioPapa");
 
 async function requestWakeLock(){
   try{
@@ -381,7 +384,7 @@ function handleHits(hits, spokenText, source){
 function updateDebug(lastText=""){
   debugStatus.innerHTML = `
     Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>
-    Seuil appel Maman : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b> catégories différentes<br>
+    Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b> catégories différentes<br>
     Anti-veille : <b>${wakeLock ? "actif" : "non actif / non supporté"}</b><br>
     Micro : <b>${recognitionRunning ? "actif" : "arrêté"}</b><br>
     Groupes détectés : ${Array.from(detectedGroups).join(", ") || "aucun"}
@@ -576,6 +579,34 @@ function speak(text, opts={}){
   });
 }
 
+function playPapaAudio(){
+  return new Promise(resolve => {
+    if(!audioPapa){ resolve(); return; }
+
+    let done = false;
+    const finish = () => {
+      if(done) return;
+      done = true;
+      audioPapa.removeEventListener("ended", finish);
+      audioPapa.removeEventListener("error", finish);
+      resolve();
+    };
+
+    try{
+      audioPapa.pause();
+      audioPapa.currentTime = 0;
+      audioPapa.addEventListener("ended", finish);
+      audioPapa.addEventListener("error", finish);
+      const p = audioPapa.play();
+      if(p && typeof p.catch === "function"){
+        p.catch(() => finish());
+      }
+    }catch(e){
+      finish();
+    }
+  });
+}
+
 async function answerCall(){
   stopRingtone();
   if(navigator.vibrate) navigator.vibrate(0);
@@ -583,17 +614,23 @@ async function answerCall(){
   incomingButtons.style.display = "none";
   activeCallControls.style.display = "block";
   callModeText.textContent = "appel en cours";
-  callState.textContent = "00:01";
+  callState.textContent = "Papa";
 
-  await speak("Ma chérie ? Est-ce que tu m'entends ?");
-  await sleep(350);
-  await speak("Allô ? Allô ? Je n'entends pas très bien.");
-  await sleep(350);
-  await speak("Éloigne-toi un peu et mets-toi dans un endroit où tu peux parler tranquillement.");
-  await sleep(350);
-  await speak("Message HIBOU. Si tu n'es pas à l'aise, trouve une excuse simple et éloigne-toi maintenant.");
+  // 1) Lecture du vrai fichier audio papa.m4a
+  await playPapaAudio();
+
+  // 2) Puis message HIBOU automatiquement après la fin de l'audio
+  await sleep(450);
+  callState.textContent = "Message HIBOU";
+  await speak("Message HIBOU.");
   await sleep(250);
-  await speak("Tu peux dire que ta maman t'attend, que tu dois rentrer, ou que tu dois rappeler immédiatement.");
+  await speak("Si tu n'es pas à l'aise, éloigne-toi maintenant.");
+  await sleep(250);
+  await speak("Trouve une excuse simple pour mettre fin à la situation.");
+  await sleep(250);
+  await speak("Rejoins un endroit fréquenté ou une personne de confiance.");
+  await sleep(250);
+  await speak("Si nécessaire, appelle immédiatement un proche.");
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -601,6 +638,11 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function resetToHome(){
   stopRingtone();
   await releaseWakeLock();
+
+  try{
+    audioPapa.pause();
+    audioPapa.currentTime = 0;
+  }catch(e){}
 
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
   if(navigator.vibrate) navigator.vibrate(0);

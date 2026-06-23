@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC8 Papa audio + message HIBOU sécurisé</title>
+  <title>HIBOU - SC9 Papa audio d'abord</title>
   <style>
     :root{--text:#f5f7ff;--muted:#a9b3d1;--green:#2dff88;--yellow:#ffd166}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -61,8 +61,8 @@
         <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
       </svg>
       <h1>HIBOU</h1>
-      <div class="version">Version SC8 — message HIBOU sécurisé</div>
-      <div class="baseline">Base SC5/SC7 conservée. Appel Papa après 4 catégories. Au décroché : papa.m4a puis message HIBOU sécurisé même si le navigateur ne détecte pas correctement la fin de l’audio.</div>
+      <div class="version">Version SC9 — Papa d’abord, HIBOU ensuite</div>
+      <div class="baseline">Base SC5/SC7 conservée. Au décroché, l’audio papa.m4a est lancé en priorité. Le message HIBOU ne démarre qu’après la fin de l’audio Papa.</div>
       <button id="activateBtn">Activer HIBOU</button>
       <div class="mini">Debug : 4 tapes en bas à droite sur l’écran noir.</div>
     </div>
@@ -71,7 +71,7 @@
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC8 — panneau test</div>
+      <div class="debugTitle">HIBOU SC9 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
@@ -206,7 +206,35 @@ function restartMicSoft(reason="manuel"){
   restartingMic=true;updateDebug("Relance micro : "+reason);
   setTimeout(()=>{try{if(!recognition)recognition=setupRecognition();recognition.start()}catch(e){updateDebug("Relance impossible : "+e.message)}finally{setTimeout(()=>{restartingMic=false},600)}},250);
 }
+function preparePapaAudio(){
+  // Précharge l'audio lors du premier geste utilisateur.
+  // Cela aide beaucoup iPhone/Safari à accepter la lecture au décroché.
+  try{
+    if(!audioPapa)return;
+    audioPapa.muted=true;
+    audioPapa.volume=1;
+    audioPapa.load();
+    const p=audioPapa.play();
+    if(p && typeof p.then==="function"){
+      p.then(()=>{
+        audioPapa.pause();
+        audioPapa.currentTime=0;
+        audioPapa.muted=false;
+      }).catch(()=>{
+        audioPapa.muted=false;
+      });
+    }else{
+      audioPapa.pause();
+      audioPapa.currentTime=0;
+      audioPapa.muted=false;
+    }
+  }catch(e){
+    try{audioPapa.muted=false;}catch(err){}
+  }
+}
+
 async function startHibou(){
+  preparePapaAudio();
   if(!recognition)recognition=setupRecognition(); if(!recognition)return;
   active=true;callTriggered=false;home.style.display="none";blackScreen.classList.add("active");
   await requestWakeLock(); updateDebug("Démarrage HIBOU");
@@ -236,68 +264,81 @@ function speak(text,opts={}){
 }
 function playPapaAudio(){
   return new Promise(resolve=>{
-    if(!audioPapa){resolve();return}
+    if(!audioPapa){
+      callState.textContent="Audio Papa absent";
+      setTimeout(resolve,3000);
+      return;
+    }
 
-    let done=false;
-    let securityTimer=null;
+    let finished=false;
+    let maxTimer=null;
 
     const finish=()=>{
-      if(done)return;
-      done=true;
-      clearTimeout(securityTimer);
+      if(finished)return;
+      finished=true;
+      clearTimeout(maxTimer);
       audioPapa.removeEventListener("ended",finish);
-      audioPapa.removeEventListener("error",finish);
-      audioPapa.removeEventListener("pause",checkIfEnded);
+      audioPapa.removeEventListener("error",onError);
+      callState.textContent="Fin audio Papa";
       resolve();
     };
 
-    const checkIfEnded=()=>{
-      // Certains navigateurs ne déclenchent pas toujours "ended" proprement sur m4a.
-      // Si la lecture est arrivée presque à la fin, on force la suite.
-      try{
-        if(audioPapa.duration && audioPapa.currentTime >= audioPapa.duration - 0.25){
-          finish();
-        }
-      }catch(e){}
+    const onError=()=>{
+      // On ne zappe pas instantanément vers HIBOU.
+      // On laisse quelques secondes visibles pour constater que l'audio Papa n'a pas chargé.
+      callState.textContent="Audio Papa non chargé";
+      setTimeout(finish,3500);
     };
 
-    audioPapa.pause();
-    try{ audioPapa.currentTime=0; }catch(e){}
+    try{
+      audioPapa.pause();
+      audioPapa.currentTime=0;
+      audioPapa.muted=false;
+      audioPapa.volume=1;
+      audioPapa.load();
+    }catch(e){}
 
     audioPapa.addEventListener("ended",finish);
-    audioPapa.addEventListener("error",finish);
-    audioPapa.addEventListener("pause",checkIfEnded);
+    audioPapa.addEventListener("error",onError);
+
+    callState.textContent="Papa parle...";
 
     const playPromise=audioPapa.play();
 
-    if(playPromise && typeof playPromise.catch==="function"){
-      playPromise.catch(()=>{
-        // Si le fichier audio ne part pas, on ne bloque pas l'appli :
-        // on enchaîne quand même sur le message HIBOU.
-        finish();
+    if(playPromise && typeof playPromise.then==="function"){
+      playPromise.then(()=>{
+        callState.textContent="Papa parle...";
+      }).catch(()=>{
+        // Sur certains iPhone, play() peut refuser si le fichier n'est pas encore prêt.
+        // On retente une fois après un très court délai, toujours avant HIBOU.
+        setTimeout(()=>{
+          const retry=audioPapa.play();
+          if(retry && typeof retry.catch==="function"){
+            retry.catch(onError);
+          }
+        },600);
       });
     }
 
-    // Sécurité absolue : si Safari ne renvoie jamais "ended",
-    // on lance quand même le message HIBOU après la durée de l'audio + marge.
+    // Sécurité : si l'événement ended ne remonte jamais, on attend la durée réelle de l'audio.
+    // Si la durée est inconnue, on laisse 25 secondes avant d'enchaîner.
     setTimeout(()=>{
-      let delay=18000;
+      let delay=25000;
       try{
-        if(audioPapa.duration && !isNaN(audioPapa.duration)){
-          delay=Math.max(6000, Math.min(45000, (audioPapa.duration*1000)+1000));
+        if(audioPapa.duration && !isNaN(audioPapa.duration) && isFinite(audioPapa.duration)){
+          delay=Math.max(5000, Math.min(90000, audioPapa.duration*1000 + 1200));
         }
       }catch(e){}
-      securityTimer=setTimeout(finish, delay);
-    },500);
+      maxTimer=setTimeout(finish,delay);
+    },800);
   });
 }
 async function answerCall(){
   stopRingtone(); if(navigator.vibrate)navigator.vibrate(0);
   incomingButtons.style.display="none"; activeCallControls.style.display="block";
-  callModeText.textContent="appel en cours"; callState.textContent="Papa";
+  callModeText.textContent="appel en cours"; callState.textContent="Préparation audio Papa";
   await playPapaAudio();
-  await sleep(450);
-  callState.textContent="Message HIBOU";
+  await sleep(700); callState.textContent="Message HIBOU";
   await speak("Message HIBOU.");
   await sleep(250); await speak("Si tu n'es pas à l'aise, éloigne-toi maintenant.");
   await sleep(250); await speak("Trouve une excuse simple pour mettre fin à la situation.");

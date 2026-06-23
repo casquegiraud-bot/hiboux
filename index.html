@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC3 correction déclenchement appel</title>
+  <title>HIBOU - SC4 anti-veille</title>
   <style>
     :root{
       --bg:#070914;
@@ -40,7 +40,7 @@
     .owl{width:190px;height:190px;margin:0 auto 12px;display:block}
     h1{margin:8px 0 0;font-size:38px;letter-spacing:1px}
     .version{margin-top:6px;color:var(--yellow);font-weight:900;text-transform:uppercase;font-size:14px}
-    .baseline{color:var(--muted);font-size:15px;line-height:1.4;margin:14px auto 24px;max-width:380px}
+    .baseline{color:var(--muted);font-size:15px;line-height:1.4;margin:14px auto 24px;max-width:390px}
     #activateBtn{
       width:100%;
       max-width:390px;
@@ -72,7 +72,7 @@
       left:12px;
       right:12px;
       bottom:12px;
-      max-height:48vh;
+      max-height:52vh;
       overflow:auto;
       background:rgba(10,14,28,.96);
       color:white;
@@ -86,8 +86,8 @@
     #debugPanel.visible{display:block}
     .debugTitle{font-weight:900;color:var(--yellow);margin-bottom:6px}
     .debugHit{border-left:4px solid var(--green);padding:6px 8px;margin:6px 0;background:rgba(45,255,136,.08);border-radius:9px}
-    .debugBtns{display:flex;gap:8px;margin:10px 0}
-    .debugBtns button{flex:1;border:0;border-radius:10px;padding:10px;background:#24345d;color:white;font-weight:800}
+    .debugBtns{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+    .debugBtns button{flex:1 1 45%;border:0;border-radius:10px;padding:10px;background:#24345d;color:white;font-weight:800}
     #hiddenTapZone{
       position:fixed;
       right:0;
@@ -170,21 +170,23 @@
       </svg>
 
       <h1>HIBOU</h1>
-      <div class="version">Version SC3 — correction appel</div>
-      <div class="baseline">Même base SC1 validée, mais détection renforcée : analyse du texte provisoire et final. Appel Maman après 4 catégories différentes détectées.</div>
+      <div class="version">Version SC4 — anti-veille</div>
+      <div class="baseline">Même moteur SC3, avec demande de maintien d’écran actif. L’écran reste noir, mais le téléphone ne doit plus partir en veille si le navigateur accepte l’anti-veille.</div>
       <button id="activateBtn">Activer HIBOU</button>
-      <div class="mini">Écran noir total après activation. Pour voir le debug : 4 tapes en bas à droite.</div>
+      <div class="mini">Important : à tester en HTTPS / GitHub Pages / Netlify. Le Wake Lock n’est pas garanti dans tous les navigateurs iPhone.</div>
     </div>
   </section>
 
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC3 — panneau test</div>
+      <div class="debugTitle">HIBOU SC4 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
         <button id="injectBtn">Injecter 4 phrases</button>
+        <button id="wakeBtn">Réactiver anti-veille</button>
+        <button id="stopBtn">Stop HIBOU</button>
       </div>
       <div id="debugTranscript"></div>
       <div id="debugHits"></div>
@@ -244,6 +246,9 @@ let analyzedMemory = new Set();
 let tapCount = 0;
 let tapTimer = null;
 let ringTimer = null;
+let wakeLock = null;
+let keepAliveTimer = null;
+let audioCtx = null;
 
 const home = document.getElementById("home");
 const blackScreen = document.getElementById("blackScreen");
@@ -263,6 +268,77 @@ const declineBtn = document.getElementById("declineBtn");
 const hangupBtn = document.getElementById("hangupBtn");
 const forceCallBtn = document.getElementById("forceCallBtn");
 const injectBtn = document.getElementById("injectBtn");
+const wakeBtn = document.getElementById("wakeBtn");
+const stopBtn = document.getElementById("stopBtn");
+
+async function requestWakeLock(){
+  try{
+    if("wakeLock" in navigator){
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => {
+        wakeLock = null;
+        updateDebug("Anti-veille relâché");
+      });
+      updateDebug("Anti-veille actif");
+      return true;
+    } else {
+      updateDebug("Wake Lock non disponible sur ce navigateur");
+      return false;
+    }
+  }catch(e){
+    updateDebug("Anti-veille refusé : " + e.message);
+    return false;
+  }
+}
+
+async function releaseWakeLock(){
+  try{
+    if(wakeLock){
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  }catch(e){}
+}
+
+function startKeepAlive(){
+  stopKeepAlive();
+
+  // Petit heartbeat silencieux : aide certains navigateurs à garder la page vivante.
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = audioCtx || new AudioContext();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
+
+  keepAliveTimer = setInterval(async () => {
+    if(active && !callTriggered){
+      if(!wakeLock) await requestWakeLock();
+      if(recognition){
+        // Relance douce si le navigateur a coupé la reconnaissance.
+        try{
+          if(document.visibilityState === "visible") recognition.start();
+        }catch(e){}
+      }
+    }
+  }, 15000);
+}
+
+function stopKeepAlive(){
+  if(keepAliveTimer){
+    clearInterval(keepAliveTimer);
+    keepAliveTimer = null;
+  }
+}
+
+document.addEventListener("visibilitychange", async () => {
+  if(document.visibilityState === "visible" && active && !callTriggered){
+    await requestWakeLock();
+    try{
+      if(recognition) recognition.start();
+    }catch(e){}
+    updateDebug("Application revenue au premier plan : écoute relancée");
+  }
+});
 
 function normalize(text){
   return text
@@ -340,6 +416,8 @@ function updateDebug(lastText=""){
   debugStatus.innerHTML = `
     Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>
     Seuil appel Maman : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b> catégories différentes<br>
+    Anti-veille : <b>${wakeLock ? "actif" : "non actif / non supporté"}</b><br>
+    Visibilité page : ${document.visibilityState}<br>
     Groupes détectés : ${Array.from(detectedGroups).join(", ") || "aucun"}
   `;
   debugTranscript.innerHTML = lastText ? `<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>` : "";
@@ -386,9 +464,6 @@ function setupRecognition(){
 
     if(merged){
       updateDebug(merged);
-
-      // CORRECTION SC3 : on analyse aussi le provisoire.
-      // C'est ce qui évite le bug iPhone/Safari où la phrase est affichée mais pas toujours validée en "final".
       analyze(merged, finalText.trim() ? "final+interim" : "interim");
     }
 
@@ -415,7 +490,7 @@ function setupRecognition(){
   return rec;
 }
 
-function startHibou(){
+async function startHibou(){
   if(!recognition) recognition = setupRecognition();
   if(!recognition) return;
 
@@ -423,6 +498,9 @@ function startHibou(){
   callTriggered = false;
   home.style.display = "none";
   blackScreen.classList.add("active");
+
+  await requestWakeLock();
+  startKeepAlive();
   updateDebug();
 
   try{
@@ -444,9 +522,12 @@ function stopRecognition(){
   }
 }
 
-function triggerMomCall(){
+async function triggerMomCall(){
   callTriggered = true;
   stopRecognition();
+  stopKeepAlive();
+  await releaseWakeLock();
+
   blackScreen.classList.remove("active");
   callScreen.classList.add("visible");
   incomingButtons.style.display = "flex";
@@ -460,7 +541,9 @@ function triggerMomCall(){
 function startRingtone(){
   try{
     const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContext();
+    const ctx = audioCtx || new AudioContext();
+    audioCtx = ctx;
+    if(ctx.state === "suspended") ctx.resume();
 
     function beep(){
       const osc = ctx.createOscillator();
@@ -531,8 +614,11 @@ async function answerCall(){
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-function resetToHome(){
+async function resetToHome(){
   stopRingtone();
+  stopKeepAlive();
+  await releaseWakeLock();
+
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
   if(navigator.vibrate) navigator.vibrate(0);
 
@@ -573,6 +659,9 @@ injectBtn.addEventListener("click", () => {
   analyze("monte dans ma voiture", "test");
   analyze("donne moi ton numéro", "test");
 });
+
+wakeBtn.addEventListener("click", requestWakeLock);
+stopBtn.addEventListener("click", resetToHome);
 
 updateDebug();
 </script>

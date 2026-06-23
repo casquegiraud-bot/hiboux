@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - Version Essai 1 / SC1</title>
+  <title>HIBOU - SC2 écran noir + appel Maman</title>
   <style>
     :root{
       --bg:#070914;
@@ -15,303 +15,347 @@
       --blue:#5aa9ff;
       --yellow:#ffd166;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;min-height:100%;background:#000;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+    body{overflow:hidden}
+
+    /* ACCUEIL */
+    #home{
       min-height:100vh;
-      background:radial-gradient(circle at top,#182047 0,#070914 52%,#02030a 100%);
-      color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      min-height:100dvh;
+      padding:24px;
       display:flex;
+      align-items:center;
       justify-content:center;
-      align-items:stretch;
-      padding:16px;
+      background:radial-gradient(circle at top,#1b2454 0,#070914 52%,#02030a 100%);
     }
-    .app{
+    .homeCard{
       width:100%;
       max-width:520px;
-      min-height:calc(100vh - 32px);
-      background:rgba(16,22,41,.88);
+      background:rgba(16,22,41,.9);
       border:1px solid rgba(255,255,255,.12);
-      border-radius:28px;
-      box-shadow:0 24px 80px rgba(0,0,0,.45);
-      padding:20px;
-      display:flex;
-      flex-direction:column;
-      gap:18px;
-    }
-    header{
+      border-radius:32px;
+      padding:28px 22px;
       text-align:center;
-      padding:10px 8px 0;
+      box-shadow:0 24px 80px rgba(0,0,0,.48);
+    }
+    .owl{
+      width:190px;
+      height:190px;
+      margin:0 auto 12px;
+      display:block;
     }
     h1{
-      margin:0;
-      font-size:28px;
-      letter-spacing:.5px;
+      margin:8px 0 0;
+      font-size:38px;
+      letter-spacing:1px;
     }
     .version{
       margin-top:6px;
       color:var(--yellow);
-      font-weight:800;
-      font-size:15px;
+      font-weight:900;
       text-transform:uppercase;
-    }
-    .sub{
-      margin-top:8px;
-      color:var(--muted);
       font-size:14px;
-      line-height:1.35;
     }
-    #startBtn{
+    .baseline{
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.4;
+      margin:14px auto 24px;
+      max-width:360px;
+    }
+    #activateBtn{
       width:100%;
+      max-width:390px;
       border:0;
-      border-radius:20px;
-      padding:20px 18px;
+      border-radius:24px;
+      padding:22px 18px;
       background:linear-gradient(135deg,#1d7dff,#6ed7ff);
       color:white;
-      font-size:24px;
-      font-weight:900;
-      box-shadow:0 12px 28px rgba(29,125,255,.34);
+      font-size:25px;
+      font-weight:950;
+      box-shadow:0 16px 36px rgba(29,125,255,.35);
       cursor:pointer;
     }
-    #startBtn.active{
-      background:linear-gradient(135deg,#293453,#526087);
+    .mini{
+      margin-top:16px;
+      font-size:12px;
+      color:#8c96b7;
+      line-height:1.35;
     }
-    .dashboard{
-      display:grid;
-      grid-template-columns:130px 1fr;
-      gap:16px;
-      align-items:stretch;
+
+    /* ÉCRAN NOIR */
+    #blackScreen{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:#000;
+      color:#000;
+      z-index:10;
     }
-    .lightCard,.scoreCard{
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.1);
-      border-radius:22px;
-      padding:16px;
-    }
-    .light{
-      width:92px;
-      height:92px;
-      border-radius:50%;
-      margin:0 auto 12px;
-      background:var(--red);
-      box-shadow:0 0 34px rgba(255,48,79,.65), inset 0 0 16px rgba(0,0,0,.28);
-      transition:.25s;
-    }
-    .light.green{
-      background:var(--green);
-      box-shadow:0 0 38px rgba(45,255,136,.75), inset 0 0 16px rgba(0,0,0,.18);
-    }
-    .label{
-      text-align:center;
-      font-size:18px;
-      font-weight:900;
-    }
-    .scoreLine{
-      font-size:15px;
-      color:var(--muted);
-      margin-bottom:10px;
-    }
-    .bigNumber{
-      font-size:42px;
-      font-weight:900;
+    #blackScreen.active{display:block}
+
+    /* Zone invisible de debug, activable par 4 taps bas droit */
+    #debugPanel{
+      display:none;
+      position:fixed;
+      left:12px;
+      right:12px;
+      bottom:12px;
+      max-height:42vh;
+      overflow:auto;
+      background:rgba(10,14,28,.94);
       color:white;
-      line-height:1;
-    }
-    .small{
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:12px;
+      z-index:40;
       font-size:13px;
-      color:var(--muted);
       line-height:1.35;
-      margin-top:8px;
     }
-    .transcriptBox,.detectedBox{
-      background:rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:22px;
-      padding:16px;
+    #debugPanel.visible{display:block}
+    .debugTitle{font-weight:900;color:var(--yellow);margin-bottom:6px}
+    .debugHit{border-left:4px solid var(--green);padding:6px 8px;margin:6px 0;background:rgba(45,255,136,.08);border-radius:9px}
+    #hiddenTapZone{
+      position:fixed;
+      right:0;
+      bottom:0;
+      width:96px;
+      height:96px;
+      z-index:35;
+      background:transparent;
     }
-    .boxTitle{
-      font-size:14px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      font-weight:800;
-      margin-bottom:10px;
+
+    /* APPEL MAMAN */
+    #callScreen{
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:60;
+      color:white;
+      background:linear-gradient(180deg,#151515,#050505 55%,#000);
+      padding:env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
     }
-    #transcript{
-      min-height:78px;
-      font-size:18px;
-      line-height:1.35;
-      color:#e9edff;
-    }
-    #detectedList{
+    #callScreen.visible{
       display:flex;
       flex-direction:column;
-      gap:10px;
-      max-height:240px;
-      overflow:auto;
-      padding-right:4px;
+      align-items:center;
+      justify-content:space-between;
     }
-    .hit{
-      border-left:5px solid var(--green);
-      background:rgba(45,255,136,.09);
-      border-radius:14px;
-      padding:10px 12px;
+    .callTop{
+      padding-top:56px;
+      text-align:center;
+      width:100%;
     }
-    .hit strong{
-      display:block;
-      font-size:15px;
-      color:var(--green);
-      margin-bottom:4px;
+    .incoming{
+      color:#d7d7d7;
+      font-size:17px;
+      margin-bottom:22px;
     }
-    .hit span{
-      font-size:16px;
-      color:white;
-    }
-    .empty{
-      color:var(--muted);
-      font-size:16px;
-    }
-    .controls{
+    .avatar{
+      width:116px;
+      height:116px;
+      border-radius:50%;
+      background:linear-gradient(135deg,#f4d3b4,#b86b6b);
       display:flex;
-      gap:10px;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 20px;
+      font-size:48px;
+      box-shadow:0 10px 40px rgba(255,255,255,.12);
     }
-    .secondary{
+    .caller{
+      font-size:44px;
+      font-weight:700;
+      margin-bottom:8px;
+    }
+    .callState{
+      color:#d7d7d7;
+      font-size:18px;
+    }
+    .callButtons{
+      width:100%;
+      max-width:360px;
+      display:flex;
+      justify-content:space-between;
+      gap:28px;
+      padding-bottom:54px;
+    }
+    .roundBtn{
       flex:1;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.07);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
       color:white;
-      border-radius:16px;
-      padding:14px;
-      font-weight:800;
+      font-size:14px;
+      user-select:none;
+    }
+    .circle{
+      width:76px;
+      height:76px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:30px;
+      border:0;
+      color:white;
       cursor:pointer;
     }
-    .warning{
-      background:rgba(255,209,102,.1);
-      border:1px solid rgba(255,209,102,.25);
-      color:#ffe4a0;
-      padding:12px 14px;
-      border-radius:16px;
-      font-size:13px;
-      line-height:1.35;
+    .decline{background:#ff3b30}
+    .answer{background:#34c759}
+    #activeCallControls{
+      display:none;
+      width:100%;
+      max-width:360px;
+      padding-bottom:54px;
+      text-align:center;
+    }
+    #hangupBtn{
+      width:84px;
+      height:84px;
+      border-radius:50%;
+      border:0;
+      color:white;
+      background:#ff3b30;
+      font-size:34px;
+      cursor:pointer;
+    }
+    .hintExit{
+      color:#8b8b8b;
+      font-size:12px;
+      margin-top:18px;
+    }
+
+    @media (max-width:380px){
+      .owl{width:160px;height:160px}
+      h1{font-size:33px}
+      .caller{font-size:38px}
+      #activateBtn{font-size:22px}
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <header>
+  <section id="home">
+    <div class="homeCard">
+      <svg class="owl" viewBox="0 0 240 240" aria-label="Hibou protecteur">
+        <defs>
+          <radialGradient id="g1" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#6ed7ff"/>
+            <stop offset="55%" stop-color="#1d7dff"/>
+            <stop offset="100%" stop-color="#14224f"/>
+          </radialGradient>
+          <linearGradient id="gold" x1="0" x2="1">
+            <stop offset="0" stop-color="#ffd166"/>
+            <stop offset="1" stop-color="#ff9f1c"/>
+          </linearGradient>
+        </defs>
+        <path d="M120 18 C85 20 55 45 45 82 C25 91 18 114 28 136 C35 151 47 158 58 159 C66 194 90 221 120 225 C150 221 174 194 182 159 C193 158 205 151 212 136 C222 114 215 91 195 82 C185 45 155 20 120 18Z" fill="url(#g1)" stroke="#cfefff" stroke-width="4"/>
+        <path d="M75 77 C88 50 107 48 120 72 C133 48 152 50 165 77 C152 70 136 71 120 87 C104 71 88 70 75 77Z" fill="#0a1027" opacity=".75"/>
+        <circle cx="86" cy="105" r="31" fill="#f7fbff"/>
+        <circle cx="154" cy="105" r="31" fill="#f7fbff"/>
+        <circle cx="86" cy="105" r="14" fill="#071225"/>
+        <circle cx="154" cy="105" r="14" fill="#071225"/>
+        <circle cx="92" cy="98" r="5" fill="white"/>
+        <circle cx="160" cy="98" r="5" fill="white"/>
+        <path d="M120 124 L107 146 L133 146 Z" fill="url(#gold)"/>
+        <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
+        <path d="M48 115 C36 132 36 151 51 158" fill="none" stroke="#6ed7ff" stroke-width="10" stroke-linecap="round"/>
+        <path d="M192 115 C204 132 204 151 189 158" fill="none" stroke="#6ed7ff" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+
       <h1>HIBOU</h1>
-      <div class="version">Version Essai 1 / SC1</div>
-      <div class="sub">Laboratoire de détection : rouge par défaut, vert si une phrase sensible est détectée. Alerte confirmée après 3 catégories différentes.</div>
-    </header>
+      <div class="version">Version SC2 — base SC1 conservée</div>
+      <div class="baseline">Appuie pour lancer le mode discret. L’écran devient noir, l’écoute démarre, puis HIBOU déclenche un faux appel de Maman après 4 catégories sensibles détectées.</div>
+      <button id="activateBtn">Activer HIBOU</button>
+      <div class="mini">Prototype local de démonstration. La transcription est gardée en mémoire de la page uniquement et disparaît au rechargement.</div>
+    </div>
+  </section>
 
-    <button id="startBtn">Activer HIBOU</button>
+  <section id="blackScreen">
+    <div id="hiddenTapZone"></div>
+    <div id="debugPanel">
+      <div class="debugTitle">HIBOU — panneau test</div>
+      <div id="debugStatus">Écoute active…</div>
+      <div id="debugTranscript"></div>
+      <div id="debugHits"></div>
+    </div>
+  </section>
 
-    <section class="dashboard">
-      <div class="lightCard">
-        <div id="light" class="light"></div>
-        <div id="lightLabel" class="label">ROUGE</div>
-      </div>
-      <div class="scoreCard">
-        <div class="scoreLine">Catégories sensibles différentes détectées</div>
-        <div class="bigNumber"><span id="count">0</span>/3</div>
-        <div id="stateText" class="small">En attente d’activation du micro.</div>
-      </div>
-    </section>
-
-    <section class="transcriptBox">
-      <div class="boxTitle">Ce que HIBOU entend</div>
-      <div id="transcript">Appuie sur « Activer HIBOU », autorise le micro, puis parle.</div>
-    </section>
-
-    <section class="detectedBox">
-      <div class="boxTitle">Phrases sensibles détectées</div>
-      <div id="detectedList">
-        <div class="empty">Aucune phrase sensible détectée pour l’instant.</div>
-      </div>
-    </section>
-
-    <div class="controls">
-      <button class="secondary" id="resetBtn">Réinitialiser</button>
-      <button class="secondary" id="testBtn">Test manuel</button>
+  <section id="callScreen">
+    <div class="callTop">
+      <div class="incoming" id="callModeText">appel entrant</div>
+      <div class="avatar">👩</div>
+      <div class="caller">Maman</div>
+      <div class="callState" id="callState">Appel mobile</div>
     </div>
 
-    <div class="warning">
-      Prototype pédagogique de test : l’analyse se fait localement dans le navigateur par reconnaissance vocale + comparaison de phrases. Aucun enregistrement audio n’est conservé par ce fichier.
+    <div class="callButtons" id="incomingButtons">
+      <div class="roundBtn">
+        <button class="circle decline" id="declineBtn">✕</button>
+        <span>Refuser</span>
+      </div>
+      <div class="roundBtn">
+        <button class="circle answer" id="answerBtn">✓</button>
+        <span>Répondre</span>
+      </div>
     </div>
-  </main>
+
+    <div id="activeCallControls">
+      <button id="hangupBtn">⌕</button>
+      <div>Raccrocher</div>
+      <div class="hintExit">Après raccrochage : retour à l’accueil.</div>
+    </div>
+  </section>
 
 <script>
+/* =========================
+   BASE SC1 VALIDÉE : 100 phrases / 10 groupes
+   ========================= */
 const SENSITIVE_GROUPS = [
-  {
-    id:"apparence",
-    label:"Remarque sur le physique",
-    examples:["tu es jolie","tu es belle","tu es très jolie","tu es vraiment belle","tu es mignonne","tu es canon","tu es attirante","tu as un joli corps","tu es trop belle","tu es magnifique"]
-  },
-  {
-    id:"secret_parents",
-    label:"Secret demandé vis-à-vis des parents",
-    examples:["ne dis rien à tes parents","surtout ne dis rien à tes parents","garde ça pour toi","tes parents n'ont pas besoin de savoir","ça reste entre nous","ne raconte pas ça chez toi","il ne faut pas que tes parents sachent","on garde ça secret","promets moi de ne rien dire","personne ne doit être au courant"]
-  },
-  {
-    id:"isolement_voiture",
-    label:"Demande d’isolement ou de voiture",
-    examples:["monte dans ma voiture","viens dans ma voiture","je te raccompagne seul","on va faire un tour","viens te promener avec moi","viens seule avec moi","on sera mieux ailleurs","viens dans un endroit tranquille","je connais un coin calme","suis moi dehors"]
-  },
-  {
-    id:"photos",
-    label:"Demande de photos ou images",
-    examples:["envoie moi une photo","tu peux envoyer des photos","envoie une photo de toi","fais moi une photo","montre moi une photo","envoie moi un selfie","tu peux m'envoyer une image","envoie une photo privée","j'aimerais te voir en photo","garde la caméra pour moi"]
-  },
-  {
-    id:"contact_prive",
-    label:"Contact privé hors cadre normal",
-    examples:["donne moi ton numéro","envoie moi ton snap","ajoute moi sur snap","parle moi en privé","écris moi le soir","on peut discuter en dehors","je vais t'écrire directement","donne moi ton insta","réponds moi quand tu es seule","on se parle sans les autres"]
-  },
-  {
-    id:"cadeaux",
-    label:"Cadeaux ou avantages ambigus",
-    examples:["je peux t'offrir quelque chose","j'ai un cadeau pour toi","je peux te faire plaisir","je t'achète ce que tu veux","je peux t'aider si tu es gentille","tu mérites un cadeau","je peux te donner de l'argent","je t'invite quelque part","je peux payer pour toi","personne ne saura pour le cadeau"]
-  },
-  {
-    id:"culpabilisation",
-    label:"Pression ou culpabilisation",
-    examples:["ne me déçois pas","fais moi confiance","tu peux bien faire ça pour moi","je pensais que tu étais plus mature","tu n'es plus une enfant","tu vas me vexer","ce n'est pas grave","arrête d'avoir peur","tu exagères","je sais ce qui est bon pour toi"]
-  },
-  {
-    id:"rdv_cache",
-    label:"Rendez-vous caché ou inhabituel",
-    examples:["retrouve moi après les cours","viens me voir seule","passe me voir ce soir","on se voit sans prévenir personne","viens quand il n'y aura personne","attends moi dehors","retrouve moi au parking","viens à la fin de l'entraînement","viens plus tôt que les autres","reste après avec moi"]
-  },
-  {
-    id:"compliment_relation",
-    label:"Relation trop personnelle",
-    examples:["tu es spéciale pour moi","je pense souvent à toi","tu comptes beaucoup pour moi","je te préfère aux autres","tu es différente des autres","j'aime bien être seul avec toi","on a une connexion","tu me comprends mieux que les autres","je te fais plus confiance qu'aux autres","j'aime nos petits secrets"]
-  },
-  {
-    id:"distance_autorite",
-    label:"Confusion adulte / autorité / intimité",
-    examples:["avec moi tu peux tout dire","je ne suis pas comme les autres adultes","considère moi comme un ami","tu peux me parler comme à un copain","je suis de ton côté contre tes parents","les autres ne comprendraient pas","moi je te comprends","tu peux me faire confiance plus qu'aux autres","je te protège","personne ne t'écoutera comme moi"]
-  }
+  {id:"apparence",label:"Remarque sur le physique",examples:["tu es jolie","tu es belle","tu es très jolie","tu es vraiment belle","tu es mignonne","tu es canon","tu es attirante","tu as un joli corps","tu es trop belle","tu es magnifique"]},
+  {id:"secret_parents",label:"Secret demandé vis-à-vis des parents",examples:["ne dis rien à tes parents","surtout ne dis rien à tes parents","garde ça pour toi","tes parents n'ont pas besoin de savoir","ça reste entre nous","ne raconte pas ça chez toi","il ne faut pas que tes parents sachent","on garde ça secret","promets moi de ne rien dire","personne ne doit être au courant"]},
+  {id:"isolement_voiture",label:"Demande d’isolement ou de voiture",examples:["monte dans ma voiture","viens dans ma voiture","je te raccompagne seul","on va faire un tour","viens te promener avec moi","viens seule avec moi","on sera mieux ailleurs","viens dans un endroit tranquille","je connais un coin calme","suis moi dehors"]},
+  {id:"photos",label:"Demande de photos ou images",examples:["envoie moi une photo","tu peux envoyer des photos","envoie une photo de toi","fais moi une photo","montre moi une photo","envoie moi un selfie","tu peux m'envoyer une image","envoie une photo privée","j'aimerais te voir en photo","garde la caméra pour moi"]},
+  {id:"contact_prive",label:"Contact privé hors cadre normal",examples:["donne moi ton numéro","envoie moi ton snap","ajoute moi sur snap","parle moi en privé","écris moi le soir","on peut discuter en dehors","je vais t'écrire directement","donne moi ton insta","réponds moi quand tu es seule","on se parle sans les autres"]},
+  {id:"cadeaux",label:"Cadeaux ou avantages ambigus",examples:["je peux t'offrir quelque chose","j'ai un cadeau pour toi","je peux te faire plaisir","je t'achète ce que tu veux","je peux t'aider si tu es gentille","tu mérites un cadeau","je peux te donner de l'argent","je t'invite quelque part","je peux payer pour toi","personne ne saura pour le cadeau"]},
+  {id:"culpabilisation",label:"Pression ou culpabilisation",examples:["ne me déçois pas","fais moi confiance","tu peux bien faire ça pour moi","je pensais que tu étais plus mature","tu n'es plus une enfant","tu vas me vexer","ce n'est pas grave","arrête d'avoir peur","tu exagères","je sais ce qui est bon pour toi"]},
+  {id:"rdv_cache",label:"Rendez-vous caché ou inhabituel",examples:["retrouve moi après les cours","viens me voir seule","passe me voir ce soir","on se voit sans prévenir personne","viens quand il n'y aura personne","attends moi dehors","retrouve moi au parking","viens à la fin de l'entraînement","viens plus tôt que les autres","reste après avec moi"]},
+  {id:"compliment_relation",label:"Relation trop personnelle",examples:["tu es spéciale pour moi","je pense souvent à toi","tu comptes beaucoup pour moi","je te préfère aux autres","tu es différente des autres","j'aime bien être seul avec toi","on a une connexion","tu me comprends mieux que les autres","je te fais plus confiance qu'aux autres","j'aime nos petits secrets"]},
+  {id:"distance_autorite",label:"Confusion adulte / autorité / intimité",examples:["avec moi tu peux tout dire","je ne suis pas comme les autres adultes","considère moi comme un ami","tu peux me parler comme à un copain","je suis de ton côté contre tes parents","les autres ne comprendraient pas","moi je te comprends","tu peux me faire confiance plus qu'aux autres","je te protège","personne ne t'écoutera comme moi"]}
 ];
 
+const TRIGGER_CATEGORIES = 4;
 const TOTAL_PHRASES = SENSITIVE_GROUPS.reduce((sum,g)=>sum+g.examples.length,0);
 
 let recognition;
 let active = false;
+let callTriggered = false;
+let transcriptArchive = [];
 let detectedGroups = new Set();
 let detectedItems = [];
-let greenTimeout = null;
+let tapCount = 0;
+let tapTimer = null;
+let ringOsc = null;
+let ringTimer = null;
 
-const startBtn = document.getElementById("startBtn");
-const light = document.getElementById("light");
-const lightLabel = document.getElementById("lightLabel");
-const count = document.getElementById("count");
-const stateText = document.getElementById("stateText");
-const transcript = document.getElementById("transcript");
-const detectedList = document.getElementById("detectedList");
-const resetBtn = document.getElementById("resetBtn");
-const testBtn = document.getElementById("testBtn");
+const home = document.getElementById("home");
+const blackScreen = document.getElementById("blackScreen");
+const callScreen = document.getElementById("callScreen");
+const activateBtn = document.getElementById("activateBtn");
+const debugPanel = document.getElementById("debugPanel");
+const debugStatus = document.getElementById("debugStatus");
+const debugTranscript = document.getElementById("debugTranscript");
+const debugHits = document.getElementById("debugHits");
+const hiddenTapZone = document.getElementById("hiddenTapZone");
+const incomingButtons = document.getElementById("incomingButtons");
+const activeCallControls = document.getElementById("activeCallControls");
+const callState = document.getElementById("callState");
+const callModeText = document.getElementById("callModeText");
+const answerBtn = document.getElementById("answerBtn");
+const declineBtn = document.getElementById("declineBtn");
+const hangupBtn = document.getElementById("hangupBtn");
 
 function normalize(text){
   return text
@@ -346,14 +390,13 @@ function analyze(text){
     }
   }
   if(hits.length) handleHits(hits, text);
-  else setRedIfNotConfirmed();
+  updateDebug(text);
 }
 
 function handleHits(hits, spokenText){
   for(const hit of hits){
     const alreadyGroup = detectedGroups.has(hit.group.id);
     detectedGroups.add(hit.group.id);
-
     detectedItems.unshift({
       label: hit.group.label,
       phrase: hit.phrase,
@@ -362,57 +405,39 @@ function handleHits(hits, spokenText){
       time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})
     });
   }
-  updateUI();
-  flashGreen();
-}
+  updateDebug(spokenText);
 
-function flashGreen(){
-  light.classList.add("green");
-  lightLabel.textContent = "VERT";
-  stateText.textContent = detectedGroups.size >= 3
-    ? "Alerte confirmée : 3 catégories différentes détectées."
-    : "Phrase sensible détectée. Continue le test.";
-  clearTimeout(greenTimeout);
-  if(detectedGroups.size < 3){
-    greenTimeout = setTimeout(setRedIfNotConfirmed, 3500);
+  if(detectedGroups.size >= TRIGGER_CATEGORIES && !callTriggered){
+    triggerMomCall();
   }
 }
 
-function setRedIfNotConfirmed(){
-  if(detectedGroups.size >= 3){
-    light.classList.add("green");
-    lightLabel.textContent = "VERT";
-    stateText.textContent = "Alerte confirmée : seuil atteint.";
-  } else {
-    light.classList.remove("green");
-    lightLabel.textContent = "ROUGE";
-    stateText.textContent = active
-      ? `Écoute active. Base : ${TOTAL_PHRASES} phrases, ${SENSITIVE_GROUPS.length} groupes.`
-      : "Micro arrêté.";
-  }
-}
-
-function updateUI(){
-  count.textContent = Math.min(detectedGroups.size,3);
-  if(detectedItems.length === 0){
-    detectedList.innerHTML = '<div class="empty">Aucune phrase sensible détectée pour l’instant.</div>';
-    return;
-  }
-  detectedList.innerHTML = detectedItems.slice(0,12).map(item => `
-    <div class="hit">
-      <strong>${item.time} — ${item.label}${item.newGroup ? " ✅ nouvelle catégorie" : ""}</strong>
-      <span>Phrase proche détectée : « ${item.phrase} »</span>
-      <div class="small">Entendu : « ${item.spoken} »</div>
+function updateDebug(lastText=""){
+  debugStatus.innerHTML = `
+    Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>
+    Seuil appel Maman : ${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES} catégories différentes
+  `;
+  debugTranscript.innerHTML = lastText ? `<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>` : "";
+  debugHits.innerHTML = detectedItems.slice(0,8).map(item=>`
+    <div class="debugHit">
+      <b>${item.time} — ${escapeHtml(item.label)}${item.newGroup ? " ✅" : ""}</b><br>
+      Phrase proche : « ${escapeHtml(item.phrase)} »<br>
+      Entendu : « ${escapeHtml(item.spoken)} »
     </div>
-  `).join("");
+  `).join("") || `<div style="color:#a9b3d1;margin-top:8px">Aucune phrase sensible détectée.</div>`;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
 
 function setupRecognition(){
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SpeechRecognition){
-    transcript.textContent = "Reconnaissance vocale non disponible sur ce navigateur. Essaie Safari iPhone récent ou Chrome Android.";
+    alert("Reconnaissance vocale non disponible sur ce navigateur. Essaie Safari iPhone récent ou Chrome Android.");
     return null;
   }
+
   const rec = new SpeechRecognition();
   rec.lang = "fr-FR";
   rec.continuous = true;
@@ -426,72 +451,178 @@ function setupRecognition(){
       if(event.results[i].isFinal) finalText += txt + " ";
       else interimText += txt + " ";
     }
-    const display = finalText || interimText;
-    if(display.trim()){
-      transcript.textContent = display.trim();
+
+    if(interimText.trim()){
+      updateDebug(interimText.trim());
     }
+
     if(finalText.trim()){
-      analyze(finalText.trim());
+      const clean = finalText.trim();
+      transcriptArchive.push({
+        time:new Date().toISOString(),
+        text:clean
+      });
+      analyze(clean);
     }
   };
 
   rec.onerror = (event) => {
-    stateText.textContent = "Erreur micro/reconnaissance : " + event.error;
+    debugStatus.textContent = "Erreur micro/reconnaissance : " + event.error;
   };
 
   rec.onend = () => {
-    if(active){
+    if(active && !callTriggered){
       try { rec.start(); } catch(e){}
     }
   };
+
   return rec;
 }
 
-startBtn.addEventListener("click", () => {
+function startHibou(){
   if(!recognition) recognition = setupRecognition();
   if(!recognition) return;
 
-  active = !active;
-  if(active){
-    try{
-      recognition.start();
-      startBtn.textContent = "HIBOU activé";
-      startBtn.classList.add("active");
-      transcript.textContent = "Micro actif. Parle normalement.";
-      setRedIfNotConfirmed();
-    } catch(e){
-      stateText.textContent = "Impossible de démarrer le micro. Recharge la page et réessaie.";
+  active = true;
+  home.style.display = "none";
+  blackScreen.classList.add("active");
+  updateDebug();
+
+  try{
+    recognition.start();
+  }catch(e){
+    try{ recognition.stop(); setTimeout(()=>recognition.start(),250); }catch(err){}
+  }
+}
+
+function stopRecognition(){
+  active = false;
+  if(recognition){
+    try{ recognition.stop(); }catch(e){}
+  }
+}
+
+function triggerMomCall(){
+  callTriggered = true;
+  stopRecognition();
+  blackScreen.classList.remove("active");
+  callScreen.classList.add("visible");
+  incomingButtons.style.display = "flex";
+  activeCallControls.style.display = "none";
+  callModeText.textContent = "appel entrant";
+  callState.textContent = "Appel mobile";
+  startRingtone();
+  vibratePattern();
+}
+
+function startRingtone(){
+  try{
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+
+    function beep(){
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.value = 0.12;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      setTimeout(()=>{ try{osc.stop()}catch(e){} }, 420);
     }
-  } else {
-    recognition.stop();
-    startBtn.textContent = "Activer HIBOU";
-    startBtn.classList.remove("active");
-    setRedIfNotConfirmed();
+
+    beep();
+    ringTimer = setInterval(beep, 1200);
+  }catch(e){}
+}
+
+function stopRingtone(){
+  if(ringTimer){
+    clearInterval(ringTimer);
+    ringTimer = null;
+  }
+}
+
+function vibratePattern(){
+  if(navigator.vibrate){
+    navigator.vibrate([500,300,500,700,500,300,500]);
+  }
+}
+
+function speak(text, opts={}){
+  return new Promise(resolve=>{
+    if(!("speechSynthesis" in window)){
+      resolve();
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "fr-FR";
+    utter.rate = opts.rate || 0.92;
+    utter.pitch = opts.pitch || 1.05;
+    utter.volume = opts.volume || 1;
+    utter.onend = resolve;
+    utter.onerror = resolve;
+    window.speechSynthesis.speak(utter);
+  });
+}
+
+async function answerCall(){
+  stopRingtone();
+  if(navigator.vibrate) navigator.vibrate(0);
+
+  incomingButtons.style.display = "none";
+  activeCallControls.style.display = "block";
+  callModeText.textContent = "appel en cours";
+  callState.textContent = "00:01";
+
+  await speak("Ma chérie ? Est-ce que tu m'entends ?");
+  await sleep(350);
+  await speak("Allô ? Allô ? Je n'entends pas très bien.");
+  await sleep(350);
+  await speak("Éloigne-toi un peu et mets-toi dans un endroit où tu peux parler tranquillement.");
+  await sleep(350);
+  await speak("Message HIBOU. Si tu n'es pas à l'aise, trouve une excuse simple et éloigne-toi maintenant.");
+  await sleep(250);
+  await speak("Tu peux dire que ta maman t'attend, que tu dois rentrer, ou que tu dois rappeler immédiatement.");
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function resetToHome(){
+  stopRingtone();
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  if(navigator.vibrate) navigator.vibrate(0);
+
+  active = false;
+  callTriggered = false;
+  transcriptArchive = [];
+  detectedGroups.clear();
+  detectedItems = [];
+  tapCount = 0;
+  debugPanel.classList.remove("visible");
+  callScreen.classList.remove("visible");
+  blackScreen.classList.remove("active");
+  home.style.display = "flex";
+  updateDebug();
+}
+
+activateBtn.addEventListener("click", startHibou);
+answerBtn.addEventListener("click", answerCall);
+declineBtn.addEventListener("click", resetToHome);
+hangupBtn.addEventListener("click", resetToHome);
+
+hiddenTapZone.addEventListener("click", () => {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(()=>tapCount=0, 1200);
+  if(tapCount >= 4){
+    debugPanel.classList.toggle("visible");
+    tapCount = 0;
   }
 });
 
-resetBtn.addEventListener("click", () => {
-  detectedGroups.clear();
-  detectedItems = [];
-  count.textContent = "0";
-  transcript.textContent = active ? "Micro actif. Parle normalement." : "Appuie sur « Activer HIBOU », autorise le micro, puis parle.";
-  updateUI();
-  setRedIfNotConfirmed();
-});
-
-testBtn.addEventListener("click", () => {
-  const tests = [
-    "tu es très jolie",
-    "surtout ne dis rien à tes parents",
-    "monte dans ma voiture"
-  ];
-  const phrase = tests[Math.min(detectedGroups.size, tests.length - 1)];
-  transcript.textContent = phrase;
-  analyze(phrase);
-});
-
-updateUI();
-stateText.textContent = `Base chargée : ${TOTAL_PHRASES} phrases, ${SENSITIVE_GROUPS.length} groupes.`;
+updateDebug();
 </script>
 </body>
 </html>

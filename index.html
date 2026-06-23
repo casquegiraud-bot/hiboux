@@ -3,138 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC6 Papa audio personnalisé</title>
+  <title>HIBOU - SC7 Papa audio correction</title>
   <style>
-    :root{
-      --text:#f5f7ff;
-      --muted:#a9b3d1;
-      --green:#2dff88;
-      --blue:#5aa9ff;
-      --yellow:#ffd166;
-    }
+    :root{--text:#f5f7ff;--muted:#a9b3d1;--green:#2dff88;--yellow:#ffd166}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     html,body{margin:0;width:100%;min-height:100%;background:#000;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
     body{overflow:hidden}
-
-    #home{
-      min-height:100vh;
-      min-height:100dvh;
-      padding:24px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:radial-gradient(circle at top,#1b2454 0,#070914 52%,#02030a 100%);
-    }
-    .homeCard{
-      width:100%;
-      max-width:520px;
-      background:rgba(16,22,41,.9);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:32px;
-      padding:28px 22px;
-      text-align:center;
-      box-shadow:0 24px 80px rgba(0,0,0,.48);
-    }
+    #home{min-height:100vh;min-height:100dvh;padding:24px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at top,#1b2454 0,#070914 52%,#02030a 100%)}
+    .homeCard{width:100%;max-width:520px;background:rgba(16,22,41,.9);border:1px solid rgba(255,255,255,.12);border-radius:32px;padding:28px 22px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.48)}
     .owl{width:190px;height:190px;margin:0 auto 12px;display:block}
     h1{margin:8px 0 0;font-size:38px;letter-spacing:1px}
     .version{margin-top:6px;color:var(--yellow);font-weight:900;text-transform:uppercase;font-size:14px}
     .baseline{color:var(--muted);font-size:15px;line-height:1.4;margin:14px auto 24px;max-width:390px}
-    #activateBtn{
-      width:100%;
-      max-width:390px;
-      border:0;
-      border-radius:24px;
-      padding:22px 18px;
-      background:linear-gradient(135deg,#1d7dff,#6ed7ff);
-      color:white;
-      font-size:25px;
-      font-weight:950;
-      box-shadow:0 16px 36px rgba(29,125,255,.35);
-      cursor:pointer;
-    }
+    #activateBtn{width:100%;max-width:390px;border:0;border-radius:24px;padding:22px 18px;background:linear-gradient(135deg,#1d7dff,#6ed7ff);color:white;font-size:25px;font-weight:950;box-shadow:0 16px 36px rgba(29,125,255,.35);cursor:pointer}
     .mini{margin-top:16px;font-size:12px;color:#8c96b7;line-height:1.35}
-
-    #blackScreen{
-      display:none;
-      position:fixed;
-      inset:0;
-      background:#000;
-      color:#000;
-      z-index:10;
-    }
+    #blackScreen{display:none;position:fixed;inset:0;background:#000;color:#000;z-index:10}
     #blackScreen.active{display:block}
-
-    #debugPanel{
-      display:none;
-      position:fixed;
-      left:12px;
-      right:12px;
-      bottom:12px;
-      max-height:54vh;
-      overflow:auto;
-      background:rgba(10,14,28,.97);
-      color:white;
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:18px;
-      padding:12px;
-      z-index:40;
-      font-size:13px;
-      line-height:1.35;
-    }
+    #debugPanel{display:none;position:fixed;left:12px;right:12px;bottom:12px;max-height:54vh;overflow:auto;background:rgba(10,14,28,.97);color:white;border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:12px;z-index:40;font-size:13px;line-height:1.35}
     #debugPanel.visible{display:block}
     .debugTitle{font-weight:900;color:var(--yellow);margin-bottom:6px}
     .debugHit{border-left:4px solid var(--green);padding:6px 8px;margin:6px 0;background:rgba(45,255,136,.08);border-radius:9px}
     .debugBtns{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
     .debugBtns button{flex:1 1 45%;border:0;border-radius:10px;padding:10px;background:#24345d;color:white;font-weight:800}
-    #hiddenTapZone{
-      position:fixed;
-      right:0;
-      bottom:0;
-      width:110px;
-      height:110px;
-      z-index:35;
-      background:transparent;
-    }
-
-    #callScreen{
-      display:none;
-      position:fixed;
-      inset:0;
-      z-index:60;
-      color:white;
-      background:linear-gradient(180deg,#151515,#050505 55%,#000);
-      padding:env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
-    }
-    #callScreen.visible{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:space-between;
-    }
+    #hiddenTapZone{position:fixed;right:0;bottom:0;width:110px;height:110px;z-index:35;background:transparent}
+    #callScreen{display:none;position:fixed;inset:0;z-index:60;color:white;background:linear-gradient(180deg,#151515,#050505 55%,#000);padding:env(safe-area-inset-top) 24px env(safe-area-inset-bottom)}
+    #callScreen.visible{display:flex;flex-direction:column;align-items:center;justify-content:space-between}
     .callTop{padding-top:56px;text-align:center;width:100%}
     .incoming{color:#d7d7d7;font-size:17px;margin-bottom:22px}
-    .avatar{
-      width:116px;height:116px;border-radius:50%;
-      background:linear-gradient(135deg,#f4d3b4,#b86b6b);
-      display:flex;align-items:center;justify-content:center;
-      margin:0 auto 20px;font-size:48px;
-      box-shadow:0 10px 40px rgba(255,255,255,.12);
-    }
+    .avatar{width:116px;height:116px;border-radius:50%;background:linear-gradient(135deg,#9cc2ff,#445176);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:48px;box-shadow:0 10px 40px rgba(255,255,255,.12)}
     .caller{font-size:44px;font-weight:700;margin-bottom:8px}
     .callState{color:#d7d7d7;font-size:18px}
-    .callButtons{
-      width:100%;max-width:360px;
-      display:flex;justify-content:space-between;gap:28px;
-      padding-bottom:54px;
-    }
+    .callButtons{width:100%;max-width:360px;display:flex;justify-content:space-between;gap:28px;padding-bottom:54px}
     .roundBtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;color:white;font-size:14px}
-    .circle{
-      width:76px;height:76px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      font-size:30px;border:0;color:white;cursor:pointer;
-    }
-    .decline{background:#ff3b30}
-    .answer{background:#34c759}
+    .circle{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;border:0;color:white;cursor:pointer}
+    .decline{background:#ff3b30}.answer{background:#34c759}
     #activeCallControls{display:none;width:100%;max-width:360px;padding-bottom:54px;text-align:center}
     #hangupBtn{width:84px;height:84px;border-radius:50%;border:0;color:white;background:#ff3b30;font-size:34px;cursor:pointer}
     .hintExit{color:#8b8b8b;font-size:12px;margin-top:18px}
@@ -145,48 +47,38 @@
 
   <section id="home">
     <div class="homeCard">
-      <svg class="owl" viewBox="0 0 240 240" aria-label="Hibou protecteur">
+      <svg class="owl" viewBox="0 0 240 240">
         <defs>
-          <radialGradient id="g1" cx="50%" cy="35%" r="65%">
-            <stop offset="0%" stop-color="#6ed7ff"/>
-            <stop offset="55%" stop-color="#1d7dff"/>
-            <stop offset="100%" stop-color="#14224f"/>
-          </radialGradient>
-          <linearGradient id="gold" x1="0" x2="1">
-            <stop offset="0" stop-color="#ffd166"/>
-            <stop offset="1" stop-color="#ff9f1c"/>
-          </linearGradient>
+          <radialGradient id="g1" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="#6ed7ff"/><stop offset="55%" stop-color="#1d7dff"/><stop offset="100%" stop-color="#14224f"/></radialGradient>
+          <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff9f1c"/></linearGradient>
         </defs>
         <path d="M120 18 C85 20 55 45 45 82 C25 91 18 114 28 136 C35 151 47 158 58 159 C66 194 90 221 120 225 C150 221 174 194 182 159 C193 158 205 151 212 136 C222 114 215 91 195 82 C185 45 155 20 120 18Z" fill="url(#g1)" stroke="#cfefff" stroke-width="4"/>
         <path d="M75 77 C88 50 107 48 120 72 C133 48 152 50 165 77 C152 70 136 71 120 87 C104 71 88 70 75 77Z" fill="#0a1027" opacity=".75"/>
-        <circle cx="86" cy="105" r="31" fill="#f7fbff"/>
-        <circle cx="154" cy="105" r="31" fill="#f7fbff"/>
-        <circle cx="86" cy="105" r="14" fill="#071225"/>
-        <circle cx="154" cy="105" r="14" fill="#071225"/>
-        <circle cx="92" cy="98" r="5" fill="white"/>
-        <circle cx="160" cy="98" r="5" fill="white"/>
+        <circle cx="86" cy="105" r="31" fill="#f7fbff"/><circle cx="154" cy="105" r="31" fill="#f7fbff"/>
+        <circle cx="86" cy="105" r="14" fill="#071225"/><circle cx="154" cy="105" r="14" fill="#071225"/>
+        <circle cx="92" cy="98" r="5" fill="white"/><circle cx="160" cy="98" r="5" fill="white"/>
         <path d="M120 124 L107 146 L133 146 Z" fill="url(#gold)"/>
         <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
       </svg>
-
       <h1>HIBOU</h1>
-      <div class="version">Version SC6 — appel PAPA + voix personnalisée</div>
-      <div class="baseline">Base SC5 conservée. Après 4 catégories sensibles détectées, HIBOU déclenche un appel PAPA. Au décroché : lecture de papa.m4a, puis message HIBOU.</div>
+      <div class="version">Version SC7 — correction Papa audio</div>
+      <div class="baseline">Base SC5 conservée. Appel Papa après 4 catégories. Au décroché : papa.m4a puis message HIBOU.</div>
       <button id="activateBtn">Activer HIBOU</button>
-      <div class="mini">Le fichier papa.m4a doit être au même niveau que index.html. Debug : 4 tapes en bas à droite.</div>
+      <div class="mini">Debug : 4 tapes en bas à droite sur l’écran noir.</div>
     </div>
   </section>
 
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC5 — panneau test</div>
+      <div class="debugTitle">HIBOU SC7 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
         <button id="injectBtn">Injecter 4 phrases</button>
         <button id="wakeBtn">Réactiver anti-veille</button>
         <button id="restartMicBtn">Relancer micro</button>
+        <button id="testPapaBtn">Tester audio Papa</button>
         <button id="stopBtn">Stop HIBOU</button>
       </div>
       <div id="debugTranscript"></div>
@@ -201,18 +93,10 @@
       <div class="caller">Papa</div>
       <div class="callState" id="callState">Appel mobile</div>
     </div>
-
     <div class="callButtons" id="incomingButtons">
-      <div class="roundBtn">
-        <button class="circle decline" id="declineBtn">✕</button>
-        <span>Refuser</span>
-      </div>
-      <div class="roundBtn">
-        <button class="circle answer" id="answerBtn">✓</button>
-        <span>Répondre</span>
-      </div>
+      <div class="roundBtn"><button class="circle decline" id="declineBtn">✕</button><span>Refuser</span></div>
+      <div class="roundBtn"><button class="circle answer" id="answerBtn">✓</button><span>Répondre</span></div>
     </div>
-
     <div id="activeCallControls">
       <button id="hangupBtn">⌕</button>
       <div>Raccrocher</div>
@@ -237,460 +121,160 @@ const SENSITIVE_GROUPS = [
 const TRIGGER_CATEGORIES = 4;
 const TOTAL_PHRASES = SENSITIVE_GROUPS.reduce((sum,g)=>sum+g.examples.length,0);
 
-let recognition;
-let active = false;
-let recognitionRunning = false;
-let restartingMic = false;
-let callTriggered = false;
-let transcriptArchive = [];
-let detectedGroups = new Set();
-let detectedItems = [];
-let analyzedMemory = new Set();
-let tapCount = 0;
-let tapTimer = null;
-let ringTimer = null;
-let wakeLock = null;
+let recognition, active=false, recognitionRunning=false, restartingMic=false, callTriggered=false;
+let transcriptArchive=[], detectedGroups=new Set(), detectedItems=[], analyzedMemory=new Set();
+let tapCount=0, tapTimer=null, ringTimer=null, wakeLock=null;
 
-const home = document.getElementById("home");
-const blackScreen = document.getElementById("blackScreen");
-const callScreen = document.getElementById("callScreen");
-const activateBtn = document.getElementById("activateBtn");
-const debugPanel = document.getElementById("debugPanel");
-const debugStatus = document.getElementById("debugStatus");
-const debugTranscript = document.getElementById("debugTranscript");
-const debugHits = document.getElementById("debugHits");
-const hiddenTapZone = document.getElementById("hiddenTapZone");
-const incomingButtons = document.getElementById("incomingButtons");
-const activeCallControls = document.getElementById("activeCallControls");
-const callState = document.getElementById("callState");
-const callModeText = document.getElementById("callModeText");
-const answerBtn = document.getElementById("answerBtn");
-const declineBtn = document.getElementById("declineBtn");
-const hangupBtn = document.getElementById("hangupBtn");
-const forceCallBtn = document.getElementById("forceCallBtn");
-const injectBtn = document.getElementById("injectBtn");
-const wakeBtn = document.getElementById("wakeBtn");
-const restartMicBtn = document.getElementById("restartMicBtn");
-const stopBtn = document.getElementById("stopBtn");
-const audioPapa = document.getElementById("audioPapa");
+const home=document.getElementById("home"), blackScreen=document.getElementById("blackScreen"), callScreen=document.getElementById("callScreen");
+const activateBtn=document.getElementById("activateBtn"), debugPanel=document.getElementById("debugPanel"), debugStatus=document.getElementById("debugStatus");
+const debugTranscript=document.getElementById("debugTranscript"), debugHits=document.getElementById("debugHits"), hiddenTapZone=document.getElementById("hiddenTapZone");
+const incomingButtons=document.getElementById("incomingButtons"), activeCallControls=document.getElementById("activeCallControls"), callState=document.getElementById("callState");
+const callModeText=document.getElementById("callModeText"), answerBtn=document.getElementById("answerBtn"), declineBtn=document.getElementById("declineBtn"), hangupBtn=document.getElementById("hangupBtn");
+const forceCallBtn=document.getElementById("forceCallBtn"), injectBtn=document.getElementById("injectBtn"), wakeBtn=document.getElementById("wakeBtn"), restartMicBtn=document.getElementById("restartMicBtn"), stopBtn=document.getElementById("stopBtn");
+const audioPapa=document.getElementById("audioPapa"), testPapaBtn=document.getElementById("testPapaBtn");
 
 async function requestWakeLock(){
   try{
     if("wakeLock" in navigator){
-      wakeLock = await navigator.wakeLock.request("screen");
-      wakeLock.addEventListener("release", () => {
-        wakeLock = null;
-        updateDebug("Anti-veille relâché");
-      });
-      updateDebug("Anti-veille actif");
-      return true;
-    } else {
-      updateDebug("Wake Lock non disponible sur ce navigateur");
-      return false;
-    }
-  }catch(e){
-    updateDebug("Anti-veille refusé : " + e.message);
-    return false;
-  }
+      wakeLock=await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release",()=>{wakeLock=null;updateDebug("Anti-veille relâché")});
+      updateDebug("Anti-veille actif"); return true;
+    } else {updateDebug("Wake Lock non disponible"); return false}
+  }catch(e){updateDebug("Anti-veille refusé : "+e.message); return false}
 }
+async function releaseWakeLock(){try{if(wakeLock){await wakeLock.release();wakeLock=null}}catch(e){}}
 
-async function releaseWakeLock(){
-  try{
-    if(wakeLock){
-      await wakeLock.release();
-      wakeLock = null;
-    }
-  }catch(e){}
+document.addEventListener("visibilitychange",async()=>{if(document.visibilityState==="visible"&&active&&!callTriggered){await requestWakeLock();restartMicSoft("retour premier plan")}});
+
+function normalize(text){return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[’']/g," ").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim()}
+function similarityContains(spoken,phrase){
+  const s=normalize(spoken), p=normalize(phrase); if(!s||!p)return false; if(s.includes(p))return true;
+  const words=p.split(" ").filter(w=>w.length>2); if(words.length<=2)return words.every(w=>s.includes(w));
+  const hits=words.filter(w=>s.includes(w)).length; return hits>=Math.ceil(words.length*0.60);
 }
-
-document.addEventListener("visibilitychange", async () => {
-  if(document.visibilityState === "visible" && active && !callTriggered){
-    await requestWakeLock();
-    restartMicSoft("retour premier plan");
-  }
-});
-
-function normalize(text){
-  return text
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-    .replace(/[’']/g," ")
-    .replace(/[^a-z0-9\s]/g," ")
-    .replace(/\s+/g," ")
-    .trim();
-}
-
-function similarityContains(spoken, phrase){
-  const s = normalize(spoken);
-  const p = normalize(phrase);
-  if(!s || !p) return false;
-  if(s.includes(p)) return true;
-
-  const phraseWords = p.split(" ").filter(w => w.length > 2);
-  if(phraseWords.length <= 2) return phraseWords.every(w => s.includes(w));
-
-  const hits = phraseWords.filter(w => s.includes(w)).length;
-  return hits >= Math.ceil(phraseWords.length * 0.60);
-}
-
-function analyze(text, source="final"){
-  const clean = normalize(text);
-  if(!clean || clean.length < 3) return;
-
-  const hits = [];
-  for(const group of SENSITIVE_GROUPS){
-    for(const ex of group.examples){
-      if(similarityContains(clean, ex)){
-        hits.push({group, phrase: ex});
-        break;
-      }
-    }
-  }
-
-  if(hits.length){
-    handleHits(hits, text, source);
-  }
+function analyze(text,source="final"){
+  const clean=normalize(text); if(!clean||clean.length<3)return;
+  const hits=[];
+  for(const group of SENSITIVE_GROUPS){for(const ex of group.examples){if(similarityContains(clean,ex)){hits.push({group,phrase:ex});break}}}
+  if(hits.length)handleHits(hits,text,source);
   updateDebug(text);
 }
-
-function handleHits(hits, spokenText, source){
+function handleHits(hits,spokenText,source){
   for(const hit of hits){
-    const phraseKey = hit.group.id + "|" + normalize(hit.phrase);
-    const alreadyGroup = detectedGroups.has(hit.group.id);
-
-    // On évite les doublons visuels, mais on n'empêche jamais le groupe d'être comptabilisé.
+    const phraseKey=hit.group.id+"|"+normalize(hit.phrase);
+    const alreadyGroup=detectedGroups.has(hit.group.id);
     detectedGroups.add(hit.group.id);
-
     if(!analyzedMemory.has(phraseKey)){
       analyzedMemory.add(phraseKey);
-      detectedItems.unshift({
-        label: hit.group.label,
-        phrase: hit.phrase,
-        spoken: spokenText,
-        source,
-        newGroup: !alreadyGroup,
-        time: new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})
-      });
+      detectedItems.unshift({label:hit.group.label,phrase:hit.phrase,spoken:spokenText,source,newGroup:!alreadyGroup,time:new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})});
     }
   }
-
   updateDebug(spokenText);
-
-  if(detectedGroups.size >= TRIGGER_CATEGORIES && !callTriggered){
-    triggerMomCall();
-  }
+  if(detectedGroups.size>=TRIGGER_CATEGORIES&&!callTriggered) triggerPapaCall();
 }
-
 function updateDebug(lastText=""){
-  debugStatus.innerHTML = `
-    Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>
-    Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b> catégories différentes<br>
-    Anti-veille : <b>${wakeLock ? "actif" : "non actif / non supporté"}</b><br>
-    Micro : <b>${recognitionRunning ? "actif" : "arrêté"}</b><br>
-    Groupes détectés : ${Array.from(detectedGroups).join(", ") || "aucun"}
-  `;
-  debugTranscript.innerHTML = lastText ? `<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>` : "";
-  debugHits.innerHTML = detectedItems.slice(0,10).map(item=>`
-    <div class="debugHit">
-      <b>${item.time} — ${escapeHtml(item.label)}${item.newGroup ? " ✅ nouvelle catégorie" : ""}</b><br>
-      Phrase proche : « ${escapeHtml(item.phrase)} »<br>
-      Source : ${item.source}<br>
-      Entendu : « ${escapeHtml(item.spoken)} »
-    </div>
-  `).join("") || `<div style="color:#a9b3d1;margin-top:8px">Aucune phrase sensible détectée.</div>`;
+  debugStatus.innerHTML=`Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b><br>Anti-veille : <b>${wakeLock?"actif":"non actif / non supporté"}</b><br>Micro : <b>${recognitionRunning?"actif":"arrêté"}</b><br>Audio Papa : <b>${audioPapa?audioPapa.getAttribute("src"):"absent"}</b><br>Groupes détectés : ${Array.from(detectedGroups).join(", ")||"aucun"}`;
+  debugTranscript.innerHTML=lastText?`<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>`:"";
+  debugHits.innerHTML=detectedItems.slice(0,10).map(item=>`<div class="debugHit"><b>${item.time} — ${escapeHtml(item.label)}${item.newGroup?" ✅ nouvelle catégorie":""}</b><br>Phrase proche : « ${escapeHtml(item.phrase)} »<br>Source : ${item.source}<br>Entendu : « ${escapeHtml(item.spoken)} »</div>`).join("")||`<div style="color:#a9b3d1;margin-top:8px">Aucune phrase sensible détectée.</div>`;
 }
-
-function escapeHtml(str){
-  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-}
+function escapeHtml(str){return String(str).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
 function setupRecognition(){
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRecognition){
-    alert("Reconnaissance vocale non disponible sur ce navigateur. Essaie Safari iPhone récent ou Chrome Android.");
-    return null;
-  }
-
-  const rec = new SpeechRecognition();
-  rec.lang = "fr-FR";
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.maxAlternatives = 3;
-
-  rec.onstart = () => {
-    recognitionRunning = true;
-    updateDebug("Micro démarré");
-  };
-
-  rec.onresult = (event) => {
-    let finalText = "";
-    let interimText = "";
-
-    for(let i = event.resultIndex; i < event.results.length; i++){
-      for(let a = 0; a < event.results[i].length; a++){
-        const txt = event.results[i][a].transcript || "";
-        if(event.results[i].isFinal) finalText += txt + " ";
-        else interimText += txt + " ";
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){alert("Reconnaissance vocale non disponible sur ce navigateur.");return null}
+  const rec=new SpeechRecognition();
+  rec.lang="fr-FR"; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=3;
+  rec.onstart=()=>{recognitionRunning=true;updateDebug("Micro démarré")};
+  rec.onresult=(event)=>{
+    let finalText="",interimText="";
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      for(let a=0;a<event.results[i].length;a++){
+        const txt=event.results[i][a].transcript||"";
+        if(event.results[i].isFinal)finalText+=txt+" "; else interimText+=txt+" ";
       }
     }
-
-    const merged = (interimText + " " + finalText).trim();
-
-    if(merged){
-      updateDebug(merged);
-      analyze(merged, finalText.trim() ? "final+interim" : "interim");
-    }
-
-    if(finalText.trim()){
-      transcriptArchive.push({
-        time:new Date().toISOString(),
-        text:finalText.trim()
-      });
-    }
+    const merged=(interimText+" "+finalText).trim();
+    if(merged){updateDebug(merged);analyze(merged,finalText.trim()?"final+interim":"interim")}
+    if(finalText.trim())transcriptArchive.push({time:new Date().toISOString(),text:finalText.trim()});
   };
-
-  rec.onerror = (event) => {
-    updateDebug("Erreur micro/reconnaissance : " + event.error);
-    recognitionRunning = false;
-
-    // Pas de relance brutale en boucle : on laisse onend gérer proprement.
-  };
-
-  rec.onend = () => {
-    recognitionRunning = false;
-    updateDebug("Micro arrêté");
-    if(active && !callTriggered && !restartingMic){
-      setTimeout(() => restartMicSoft("onend"), 450);
-    }
-  };
-
+  rec.onerror=(event)=>{updateDebug("Erreur micro : "+event.error);recognitionRunning=false};
+  rec.onend=()=>{recognitionRunning=false;updateDebug("Micro arrêté");if(active&&!callTriggered&&!restartingMic)setTimeout(()=>restartMicSoft("onend"),450)};
   return rec;
 }
-
 function restartMicSoft(reason="manuel"){
-  if(!active || callTriggered || restartingMic) return;
-  if(recognitionRunning) return;
-
-  restartingMic = true;
-  updateDebug("Relance micro : " + reason);
-
-  setTimeout(() => {
-    try{
-      if(!recognition) recognition = setupRecognition();
-      recognition.start();
-    }catch(e){
-      updateDebug("Relance micro impossible : " + e.message);
-    }finally{
-      setTimeout(()=>{ restartingMic = false; }, 600);
-    }
-  }, 250);
+  if(!active||callTriggered||restartingMic||recognitionRunning)return;
+  restartingMic=true;updateDebug("Relance micro : "+reason);
+  setTimeout(()=>{try{if(!recognition)recognition=setupRecognition();recognition.start()}catch(e){updateDebug("Relance impossible : "+e.message)}finally{setTimeout(()=>{restartingMic=false},600)}},250);
 }
-
 async function startHibou(){
-  if(!recognition) recognition = setupRecognition();
-  if(!recognition) return;
-
-  active = true;
-  callTriggered = false;
-  home.style.display = "none";
-  blackScreen.classList.add("active");
-
-  await requestWakeLock();
-  updateDebug("Démarrage HIBOU");
-
-  try{
-    recognition.start();
-  }catch(e){
-    restartMicSoft("démarrage");
-  }
+  if(!recognition)recognition=setupRecognition(); if(!recognition)return;
+  active=true;callTriggered=false;home.style.display="none";blackScreen.classList.add("active");
+  await requestWakeLock(); updateDebug("Démarrage HIBOU");
+  try{recognition.start()}catch(e){restartMicSoft("démarrage")}
 }
-
-function stopRecognition(){
-  active = false;
-  if(recognition){
-    try{ recognition.stop(); }catch(e){}
-  }
+function stopRecognition(){active=false;if(recognition){try{recognition.stop()}catch(e){}}}
+async function triggerPapaCall(){
+  callTriggered=true; stopRecognition(); await releaseWakeLock();
+  blackScreen.classList.remove("active"); callScreen.classList.add("visible");
+  incomingButtons.style.display="flex"; activeCallControls.style.display="none";
+  callModeText.textContent="appel entrant"; callState.textContent="Appel mobile";
+  startRingtone(); vibratePattern();
 }
-
-async function triggerMomCall(){
-  callTriggered = true;
-  stopRecognition();
-  await releaseWakeLock();
-
-  blackScreen.classList.remove("active");
-  callScreen.classList.add("visible");
-  incomingButtons.style.display = "flex";
-  activeCallControls.style.display = "none";
-  callModeText.textContent = "appel entrant";
-  callState.textContent = "Appel mobile";
-  startRingtone();
-  vibratePattern();
-}
-
 function startRingtone(){
   try{
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContext();
-
-    function beep(){
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.value = 0.13;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      setTimeout(()=>{ try{osc.stop()}catch(e){} }, 420);
-    }
-
-    beep();
-    ringTimer = setInterval(beep, 1200);
+    const AudioContext=window.AudioContext||window.webkitAudioContext; const ctx=new AudioContext();
+    function beep(){const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type="sine";osc.frequency.value=880;gain.gain.value=0.13;osc.connect(gain);gain.connect(ctx.destination);osc.start();setTimeout(()=>{try{osc.stop()}catch(e){}},420)}
+    beep(); ringTimer=setInterval(beep,1200);
   }catch(e){}
 }
-
-function stopRingtone(){
-  if(ringTimer){
-    clearInterval(ringTimer);
-    ringTimer = null;
-  }
-}
-
-function vibratePattern(){
-  if(navigator.vibrate){
-    navigator.vibrate([500,300,500,700,500,300,500]);
-  }
-}
-
-function speak(text, opts={}){
-  return new Promise(resolve=>{
-    if(!("speechSynthesis" in window)){
-      resolve();
-      return;
-    }
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "fr-FR";
-    utter.rate = opts.rate || 0.92;
-    utter.pitch = opts.pitch || 1.05;
-    utter.volume = opts.volume || 1;
-    utter.onend = resolve;
-    utter.onerror = resolve;
-    window.speechSynthesis.speak(utter);
+function stopRingtone(){if(ringTimer){clearInterval(ringTimer);ringTimer=null}}
+function vibratePattern(){if(navigator.vibrate)navigator.vibrate([500,300,500,700,500,300,500])}
+function speak(text,opts={}){
+  return new Promise(resolve=>{if(!("speechSynthesis"in window)){resolve();return}
+    const utter=new SpeechSynthesisUtterance(text); utter.lang="fr-FR"; utter.rate=opts.rate||0.90; utter.pitch=opts.pitch||0.92; utter.volume=opts.volume||1; utter.onend=resolve; utter.onerror=resolve; window.speechSynthesis.speak(utter);
   });
 }
-
 function playPapaAudio(){
-  return new Promise(resolve => {
-    if(!audioPapa){ resolve(); return; }
-
-    let done = false;
-    const finish = () => {
-      if(done) return;
-      done = true;
-      audioPapa.removeEventListener("ended", finish);
-      audioPapa.removeEventListener("error", finish);
-      resolve();
-    };
-
-    try{
-      audioPapa.pause();
-      audioPapa.currentTime = 0;
-      audioPapa.addEventListener("ended", finish);
-      audioPapa.addEventListener("error", finish);
-      const p = audioPapa.play();
-      if(p && typeof p.catch === "function"){
-        p.catch(() => finish());
-      }
-    }catch(e){
-      finish();
-    }
+  return new Promise(resolve=>{
+    if(!audioPapa){resolve();return}
+    let done=false;
+    const finish=()=>{if(done)return;done=true;audioPapa.removeEventListener("ended",finish);audioPapa.removeEventListener("error",finish);resolve()};
+    audioPapa.pause(); audioPapa.currentTime=0;
+    audioPapa.addEventListener("ended",finish); audioPapa.addEventListener("error",finish);
+    const p=audioPapa.play(); if(p&&typeof p.catch==="function")p.catch(()=>finish());
   });
 }
-
 async function answerCall(){
-  stopRingtone();
-  if(navigator.vibrate) navigator.vibrate(0);
-
-  incomingButtons.style.display = "none";
-  activeCallControls.style.display = "block";
-  callModeText.textContent = "appel en cours";
-  callState.textContent = "Papa";
-
-  // 1) Lecture du vrai fichier audio papa.m4a
+  stopRingtone(); if(navigator.vibrate)navigator.vibrate(0);
+  incomingButtons.style.display="none"; activeCallControls.style.display="block";
+  callModeText.textContent="appel en cours"; callState.textContent="Papa";
   await playPapaAudio();
-
-  // 2) Puis message HIBOU automatiquement après la fin de l'audio
-  await sleep(450);
-  callState.textContent = "Message HIBOU";
+  await sleep(450); callState.textContent="Message HIBOU";
   await speak("Message HIBOU.");
-  await sleep(250);
-  await speak("Si tu n'es pas à l'aise, éloigne-toi maintenant.");
-  await sleep(250);
-  await speak("Trouve une excuse simple pour mettre fin à la situation.");
-  await sleep(250);
-  await speak("Rejoins un endroit fréquenté ou une personne de confiance.");
-  await sleep(250);
-  await speak("Si nécessaire, appelle immédiatement un proche.");
+  await sleep(250); await speak("Si tu n'es pas à l'aise, éloigne-toi maintenant.");
+  await sleep(250); await speak("Trouve une excuse simple pour mettre fin à la situation.");
+  await sleep(250); await speak("Rejoins un endroit fréquenté ou une personne de confiance.");
 }
-
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
-
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 async function resetToHome(){
-  stopRingtone();
-  await releaseWakeLock();
-
-  try{
-    audioPapa.pause();
-    audioPapa.currentTime = 0;
-  }catch(e){}
-
-  if("speechSynthesis" in window) window.speechSynthesis.cancel();
-  if(navigator.vibrate) navigator.vibrate(0);
-
-  active = false;
-  callTriggered = false;
-  recognitionRunning = false;
-  restartingMic = false;
-  transcriptArchive = [];
-  detectedGroups.clear();
-  detectedItems = [];
-  analyzedMemory.clear();
-  tapCount = 0;
-  debugPanel.classList.remove("visible");
-  callScreen.classList.remove("visible");
-  blackScreen.classList.remove("active");
-  home.style.display = "flex";
-  updateDebug("Retour accueil");
+  stopRingtone(); await releaseWakeLock();
+  try{audioPapa.pause();audioPapa.currentTime=0}catch(e){}
+  if("speechSynthesis"in window)window.speechSynthesis.cancel(); if(navigator.vibrate)navigator.vibrate(0);
+  active=false;callTriggered=false;recognitionRunning=false;restartingMic=false;transcriptArchive=[];
+  detectedGroups.clear();detectedItems=[];analyzedMemory.clear();tapCount=0;
+  debugPanel.classList.remove("visible");callScreen.classList.remove("visible");blackScreen.classList.remove("active");home.style.display="flex";updateDebug("Retour accueil");
 }
-
-activateBtn.addEventListener("click", startHibou);
-answerBtn.addEventListener("click", answerCall);
-declineBtn.addEventListener("click", resetToHome);
-hangupBtn.addEventListener("click", resetToHome);
-
-hiddenTapZone.addEventListener("click", () => {
-  tapCount++;
-  clearTimeout(tapTimer);
-  tapTimer = setTimeout(()=>tapCount=0, 1200);
-  if(tapCount >= 4){
-    debugPanel.classList.toggle("visible");
-    tapCount = 0;
-  }
-});
-
-forceCallBtn.addEventListener("click", triggerMomCall);
-
-injectBtn.addEventListener("click", () => {
-  analyze("tu es très jolie", "test");
-  analyze("ne dis rien à tes parents", "test");
-  analyze("monte dans ma voiture", "test");
-  analyze("donne moi ton numéro", "test");
-});
-
-wakeBtn.addEventListener("click", requestWakeLock);
-restartMicBtn.addEventListener("click", () => restartMicSoft("bouton debug"));
-stopBtn.addEventListener("click", resetToHome);
-
+activateBtn.addEventListener("click",startHibou);
+answerBtn.addEventListener("click",answerCall);
+declineBtn.addEventListener("click",resetToHome);
+hangupBtn.addEventListener("click",resetToHome);
+hiddenTapZone.addEventListener("click",()=>{tapCount++;clearTimeout(tapTimer);tapTimer=setTimeout(()=>tapCount=0,1200);if(tapCount>=4){debugPanel.classList.toggle("visible");tapCount=0}});
+forceCallBtn.addEventListener("click",triggerPapaCall);
+injectBtn.addEventListener("click",()=>{analyze("tu es très jolie","test");analyze("ne dis rien à tes parents","test");analyze("monte dans ma voiture","test");analyze("donne moi ton numéro","test")});
+wakeBtn.addEventListener("click",requestWakeLock);
+restartMicBtn.addEventListener("click",()=>restartMicSoft("bouton debug"));
+stopBtn.addEventListener("click",resetToHome);
+testPapaBtn.addEventListener("click",async()=>{await playPapaAudio();await speak("Message HIBOU. Si tu n'es pas à l'aise, éloigne-toi maintenant.")});
 updateDebug("Prêt");
 </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC7 Papa audio correction</title>
+  <title>HIBOU - SC8 Papa audio + message HIBOU sécurisé</title>
   <style>
     :root{--text:#f5f7ff;--muted:#a9b3d1;--green:#2dff88;--yellow:#ffd166}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -61,8 +61,8 @@
         <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
       </svg>
       <h1>HIBOU</h1>
-      <div class="version">Version SC7 — correction Papa audio</div>
-      <div class="baseline">Base SC5 conservée. Appel Papa après 4 catégories. Au décroché : papa.m4a puis message HIBOU.</div>
+      <div class="version">Version SC8 — message HIBOU sécurisé</div>
+      <div class="baseline">Base SC5/SC7 conservée. Appel Papa après 4 catégories. Au décroché : papa.m4a puis message HIBOU sécurisé même si le navigateur ne détecte pas correctement la fin de l’audio.</div>
       <button id="activateBtn">Activer HIBOU</button>
       <div class="mini">Debug : 4 tapes en bas à droite sur l’écran noir.</div>
     </div>
@@ -71,7 +71,7 @@
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC7 — panneau test</div>
+      <div class="debugTitle">HIBOU SC8 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
@@ -237,11 +237,58 @@ function speak(text,opts={}){
 function playPapaAudio(){
   return new Promise(resolve=>{
     if(!audioPapa){resolve();return}
+
     let done=false;
-    const finish=()=>{if(done)return;done=true;audioPapa.removeEventListener("ended",finish);audioPapa.removeEventListener("error",finish);resolve()};
-    audioPapa.pause(); audioPapa.currentTime=0;
-    audioPapa.addEventListener("ended",finish); audioPapa.addEventListener("error",finish);
-    const p=audioPapa.play(); if(p&&typeof p.catch==="function")p.catch(()=>finish());
+    let securityTimer=null;
+
+    const finish=()=>{
+      if(done)return;
+      done=true;
+      clearTimeout(securityTimer);
+      audioPapa.removeEventListener("ended",finish);
+      audioPapa.removeEventListener("error",finish);
+      audioPapa.removeEventListener("pause",checkIfEnded);
+      resolve();
+    };
+
+    const checkIfEnded=()=>{
+      // Certains navigateurs ne déclenchent pas toujours "ended" proprement sur m4a.
+      // Si la lecture est arrivée presque à la fin, on force la suite.
+      try{
+        if(audioPapa.duration && audioPapa.currentTime >= audioPapa.duration - 0.25){
+          finish();
+        }
+      }catch(e){}
+    };
+
+    audioPapa.pause();
+    try{ audioPapa.currentTime=0; }catch(e){}
+
+    audioPapa.addEventListener("ended",finish);
+    audioPapa.addEventListener("error",finish);
+    audioPapa.addEventListener("pause",checkIfEnded);
+
+    const playPromise=audioPapa.play();
+
+    if(playPromise && typeof playPromise.catch==="function"){
+      playPromise.catch(()=>{
+        // Si le fichier audio ne part pas, on ne bloque pas l'appli :
+        // on enchaîne quand même sur le message HIBOU.
+        finish();
+      });
+    }
+
+    // Sécurité absolue : si Safari ne renvoie jamais "ended",
+    // on lance quand même le message HIBOU après la durée de l'audio + marge.
+    setTimeout(()=>{
+      let delay=18000;
+      try{
+        if(audioPapa.duration && !isNaN(audioPapa.duration)){
+          delay=Math.max(6000, Math.min(45000, (audioPapa.duration*1000)+1000));
+        }
+      }catch(e){}
+      securityTimer=setTimeout(finish, delay);
+    },500);
   });
 }
 async function answerCall(){
@@ -249,7 +296,8 @@ async function answerCall(){
   incomingButtons.style.display="none"; activeCallControls.style.display="block";
   callModeText.textContent="appel en cours"; callState.textContent="Papa";
   await playPapaAudio();
-  await sleep(450); callState.textContent="Message HIBOU";
+  await sleep(450);
+  callState.textContent="Message HIBOU";
   await speak("Message HIBOU.");
   await sleep(250); await speak("Si tu n'es pas à l'aise, éloigne-toi maintenant.");
   await sleep(250); await speak("Trouve une excuse simple pour mettre fin à la situation.");

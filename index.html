@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC10 Papa puis voix HIBOU</title>
+  <title>HIBOU - SC9B Papa puis alerte HIBOU</title>
   <style>
     :root{--text:#f5f7ff;--muted:#a9b3d1;--green:#2dff88;--yellow:#ffd166}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -61,8 +61,8 @@
         <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
       </svg>
       <h1>HIBOU</h1>
-      <div class="version">Version SC10 — Papa puis voix HIBOU</div>
-      <div class="baseline">Base SC5/SC7 conservée. Au décroché : papa.m4a, puis voix HIBOU audible, répétée 2 fois, puis raccrochage automatique.</div>
+      <div class="version">Version SC9B — Papa puis alerte HIBOU</div>
+      <div class="baseline">Base conservée. Au décroché : papa.m4a, puis voix HIBOU audible répétée 2 fois, puis raccrochage automatique.</div>
       <button id="activateBtn">Activer HIBOU</button>
       <div class="mini">Debug : 4 tapes en bas à droite sur l’écran noir.</div>
     </div>
@@ -71,7 +71,7 @@
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC10 — panneau test</div>
+      <div class="debugTitle">HIBOU SC9B — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
@@ -206,7 +206,35 @@ function restartMicSoft(reason="manuel"){
   restartingMic=true;updateDebug("Relance micro : "+reason);
   setTimeout(()=>{try{if(!recognition)recognition=setupRecognition();recognition.start()}catch(e){updateDebug("Relance impossible : "+e.message)}finally{setTimeout(()=>{restartingMic=false},600)}},250);
 }
+function preparePapaAudio(){
+  // Précharge l'audio lors du premier geste utilisateur.
+  // Cela aide beaucoup iPhone/Safari à accepter la lecture au décroché.
+  try{
+    if(!audioPapa)return;
+    audioPapa.muted=true;
+    audioPapa.volume=1;
+    audioPapa.load();
+    const p=audioPapa.play();
+    if(p && typeof p.then==="function"){
+      p.then(()=>{
+        audioPapa.pause();
+        audioPapa.currentTime=0;
+        audioPapa.muted=false;
+      }).catch(()=>{
+        audioPapa.muted=false;
+      });
+    }else{
+      audioPapa.pause();
+      audioPapa.currentTime=0;
+      audioPapa.muted=false;
+    }
+  }catch(e){
+    try{audioPapa.muted=false;}catch(err){}
+  }
+}
+
 async function startHibou(){
+  preparePapaAudio();
   if(!recognition)recognition=setupRecognition(); if(!recognition)return;
   active=true;callTriggered=false;home.style.display="none";blackScreen.classList.add("active");
   await requestWakeLock(); updateDebug("Démarrage HIBOU");
@@ -229,11 +257,20 @@ function startRingtone(){
 }
 function stopRingtone(){if(ringTimer){clearInterval(ringTimer);ringTimer=null}}
 function vibratePattern(){if(navigator.vibrate)navigator.vibrate([500,300,500,700,500,300,500])}
-function getFrenchVoice(){
+function unlockSpeech(){
+  try{
+    if(!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+  }catch(e){}
+}
+
+function getBestFrenchVoice(){
   if(!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
   return voices.find(v => v.lang && v.lang.toLowerCase().startsWith("fr"))
-      || voices.find(v => v.name && v.name.toLowerCase().includes("fr"))
+      || voices.find(v => v.name && v.name.toLowerCase().includes("french"))
+      || voices[0]
       || null;
 }
 
@@ -244,10 +281,13 @@ function speak(text,opts={}){
       return;
     }
 
-    let resolved=false;
+    let finished=false;
+    let securityTimer=null;
+
     const done=()=>{
-      if(resolved)return;
-      resolved=true;
+      if(finished) return;
+      finished=true;
+      clearTimeout(securityTimer);
       resolve();
     };
 
@@ -258,47 +298,39 @@ function speak(text,opts={}){
 
     const utter=new SpeechSynthesisUtterance(text);
     utter.lang="fr-FR";
-    utter.rate=opts.rate||0.86;
-    utter.pitch=opts.pitch||0.95;
+    utter.rate=opts.rate||0.82;
+    utter.pitch=opts.pitch||0.92;
     utter.volume=1;
 
-    const voice=getFrenchVoice();
+    const voice=getBestFrenchVoice();
     if(voice) utter.voice=voice;
 
     utter.onend=done;
     utter.onerror=done;
 
-    // Sécurité : si Safari ne renvoie pas onend, on continue quand même.
-    const estimated=Math.max(2500, Math.min(9000, text.length*85));
-    setTimeout(done, estimated);
+    securityTimer=setTimeout(done, Math.max(2500, Math.min(9000, text.length*90)));
 
     try{
       window.speechSynthesis.speak(utter);
+      window.speechSynthesis.resume();
     }catch(e){
       done();
     }
   });
 }
 
-async function speakHibouEvacuation(){
-  callState.textContent="HIBOU parle";
+async function speakHibouWarning(){
+  unlockSpeech();
+  callState.textContent="Alerte HIBOU";
 
-  const message = [
-    "Message HIBOU.",
-    "Vous êtes dans une situation délicate.",
-    "Vous devez partir d'ici maintenant.",
-    "Cette situation est gênante et elle n'est pas adaptée.",
-    "Éloignez-vous immédiatement.",
-    "Rejoignez un endroit fréquenté ou une personne de confiance."
-  ];
+  const warningText = "Vous êtes dans une situation délicate. Vous devez partir d'ici maintenant. Cette situation est gênante et n'est pas adaptée à votre situation. Vous devez vous éloigner immédiatement.";
 
-  for(let repeat=1; repeat<=2; repeat++){
-    callState.textContent = "Message HIBOU " + repeat + " sur 2";
-    for(const line of message){
-      await speak(line);
-      await sleep(180);
-    }
-    await sleep(600);
+  for(let i=1;i<=2;i++){
+    callState.textContent="Alerte HIBOU " + i + " sur 2";
+    await speak("Message HIBOU.");
+    await sleep(250);
+    await speak(warningText);
+    await sleep(700);
   }
 
   callState.textContent="Fin de l'appel";
@@ -307,29 +339,90 @@ async function speakHibouEvacuation(){
 }
 function playPapaAudio(){
   return new Promise(resolve=>{
-    if(!audioPapa){resolve();return}
-    let done=false;
-    const finish=()=>{if(done)return;done=true;audioPapa.removeEventListener("ended",finish);audioPapa.removeEventListener("error",finish);resolve()};
-    audioPapa.pause(); audioPapa.currentTime=0;
-    audioPapa.addEventListener("ended",finish); audioPapa.addEventListener("error",finish);
-    const p=audioPapa.play(); if(p&&typeof p.catch==="function")p.catch(()=>finish());
+    if(!audioPapa){
+      callState.textContent="Audio Papa absent";
+      setTimeout(resolve,3000);
+      return;
+    }
+
+    let finished=false;
+    let maxTimer=null;
+
+    const finish=()=>{
+      if(finished)return;
+      finished=true;
+      clearTimeout(maxTimer);
+      audioPapa.removeEventListener("ended",finish);
+      audioPapa.removeEventListener("error",onError);
+      callState.textContent="Fin audio Papa";
+      resolve();
+    };
+
+    const onError=()=>{
+      // On ne zappe pas instantanément vers HIBOU.
+      // On laisse quelques secondes visibles pour constater que l'audio Papa n'a pas chargé.
+      callState.textContent="Audio Papa non chargé";
+      setTimeout(finish,3500);
+    };
+
+    try{
+      audioPapa.pause();
+      audioPapa.currentTime=0;
+      audioPapa.muted=false;
+      audioPapa.volume=1;
+      audioPapa.load();
+    }catch(e){}
+
+    audioPapa.addEventListener("ended",finish);
+    audioPapa.addEventListener("error",onError);
+
+    callState.textContent="Papa parle...";
+
+    const playPromise=audioPapa.play();
+
+    if(playPromise && typeof playPromise.then==="function"){
+      playPromise.then(()=>{
+        callState.textContent="Papa parle...";
+      }).catch(()=>{
+        // Sur certains iPhone, play() peut refuser si le fichier n'est pas encore prêt.
+        // On retente une fois après un très court délai, toujours avant HIBOU.
+        setTimeout(()=>{
+          const retry=audioPapa.play();
+          if(retry && typeof retry.catch==="function"){
+            retry.catch(onError);
+          }
+        },600);
+      });
+    }
+
+    // Sécurité : si l'événement ended ne remonte jamais, on attend la durée réelle de l'audio.
+    // Si la durée est inconnue, on laisse 25 secondes avant d'enchaîner.
+    setTimeout(()=>{
+      let delay=25000;
+      try{
+        if(audioPapa.duration && !isNaN(audioPapa.duration) && isFinite(audioPapa.duration)){
+          delay=Math.max(5000, Math.min(90000, audioPapa.duration*1000 + 1200));
+        }
+      }catch(e){}
+      maxTimer=setTimeout(finish,delay);
+    },800);
   });
 }
 async function answerCall(){
   stopRingtone();
   if(navigator.vibrate)navigator.vibrate(0);
 
+  unlockSpeech();
+
   incomingButtons.style.display="none";
   activeCallControls.style.display="block";
   callModeText.textContent="appel en cours";
 
-  // 1) D'abord : vraie voix de Papa
   callState.textContent="Papa parle";
   await playPapaAudio();
 
-  // 2) Ensuite : voix HIBOU obligatoire
-  await sleep(600);
-  await speakHibouEvacuation();
+  await sleep(700);
+  await speakHibouWarning();
 }
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 async function resetToHome(){
@@ -350,7 +443,7 @@ injectBtn.addEventListener("click",()=>{analyze("tu es très jolie","test");anal
 wakeBtn.addEventListener("click",requestWakeLock);
 restartMicBtn.addEventListener("click",()=>restartMicSoft("bouton debug"));
 stopBtn.addEventListener("click",resetToHome);
-testPapaBtn.addEventListener("click",async()=>{callState.textContent="Test Papa + HIBOU"; await playPapaAudio(); await sleep(600); await speakHibouEvacuation();});
+testPapaBtn.addEventListener("click",async()=>{unlockSpeech(); await playPapaAudio(); await sleep(700); await speakHibouWarning();});
 updateDebug("Prêt");
 </script>
 </body>

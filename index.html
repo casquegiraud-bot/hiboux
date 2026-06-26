@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC10 Alerte SMS après Papa</title>
+  <title>HIBOU - SC11 stable reset complet</title>
   <style>
     :root{--text:#f5f7ff;--muted:#a9b3d1;--green:#2dff88;--yellow:#ffd166}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -53,17 +53,15 @@
       justify-content:center;
       text-align:center;
     }
-    #safeAlert.visible{
-      display:flex;
-    }
+    #safeAlert.visible{display:flex}
     .safeCard{
       width:100%;
-      max-width:430px;
+      max-width:440px;
       background:#111827;
-      border:3px solid #ff3b30;
+      border:4px solid #ff3b30;
       border-radius:30px;
-      padding:28px 22px;
-      box-shadow:0 0 45px rgba(255,59,48,.45);
+      padding:30px 22px;
+      box-shadow:0 0 55px rgba(255,59,48,.55);
       animation:pulseAlert 1s infinite;
     }
     .safeTitle{
@@ -75,16 +73,16 @@
       text-transform:uppercase;
     }
     .safeMessage{
-      font-size:27px;
-      font-weight:900;
-      line-height:1.22;
+      font-size:28px;
+      font-weight:950;
+      line-height:1.18;
       margin-bottom:18px;
     }
     .safeSub{
-      font-size:19px;
+      font-size:20px;
       line-height:1.35;
       color:#f4f4f5;
-      margin-bottom:22px;
+      margin-bottom:24px;
     }
     .safeButton{
       width:100%;
@@ -93,13 +91,13 @@
       padding:18px;
       background:#34c759;
       color:white;
-      font-size:21px;
-      font-weight:900;
+      font-size:22px;
+      font-weight:950;
       cursor:pointer;
     }
     @keyframes pulseAlert{
       0%{transform:scale(1);box-shadow:0 0 35px rgba(255,59,48,.35)}
-      50%{transform:scale(1.018);box-shadow:0 0 60px rgba(255,59,48,.65)}
+      50%{transform:scale(1.018);box-shadow:0 0 70px rgba(255,59,48,.75)}
       100%{transform:scale(1);box-shadow:0 0 35px rgba(255,59,48,.35)}
     }
 
@@ -124,8 +122,8 @@
         <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
       </svg>
       <h1>HIBOU</h1>
-      <div class="version">Version SC10 — Papa puis alerte visuelle</div>
-      <div class="baseline">Base conservée. Au décroché : papa.m4a, puis vibration forte et grand message de sécurité lisible immédiatement.</div>
+      <div class="version">Version SC11 — stable</div>
+      <div class="baseline">Base conservée. Détection stable, appel Papa, audio papa.m4a, alerte visuelle, puis reset complet de l’application.</div>
       <button id="activateBtn">Activer HIBOU</button>
       <div class="mini">Debug : 4 tapes en bas à droite sur l’écran noir.</div>
     </div>
@@ -134,7 +132,7 @@
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC10 — panneau test</div>
+      <div class="debugTitle">HIBOU SC11 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
@@ -209,6 +207,29 @@ const forceCallBtn=document.getElementById("forceCallBtn"), injectBtn=document.g
 const audioPapa=document.getElementById("audioPapa"), testPapaBtn=document.getElementById("testPapaBtn");
 const safeAlert=document.getElementById("safeAlert"), safeOkBtn=document.getElementById("safeOkBtn");
 
+let APP_STATE = "IDLE";
+let allTimeouts = [];
+let allIntervals = [];
+
+function addTimeout(fn, delay){
+  const id = setTimeout(fn, delay);
+  allTimeouts.push(id);
+  return id;
+}
+
+function addInterval(fn, delay){
+  const id = setInterval(fn, delay);
+  allIntervals.push(id);
+  return id;
+}
+
+function clearAllTimers(){
+  allTimeouts.forEach(id=>clearTimeout(id));
+  allIntervals.forEach(id=>clearInterval(id));
+  allTimeouts = [];
+  allIntervals = [];
+}
+
 async function requestWakeLock(){
   try{
     if("wakeLock" in navigator){
@@ -249,7 +270,7 @@ function handleHits(hits,spokenText,source){
   if(detectedGroups.size>=TRIGGER_CATEGORIES&&!callTriggered) triggerPapaCall();
 }
 function updateDebug(lastText=""){
-  debugStatus.innerHTML=`Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b><br>Anti-veille : <b>${wakeLock?"actif":"non actif / non supporté"}</b><br>Micro : <b>${recognitionRunning?"actif":"arrêté"}</b><br>Audio Papa : <b>${audioPapa?audioPapa.getAttribute("src"):"absent"}</b><br>Groupes détectés : ${Array.from(detectedGroups).join(", ")||"aucun"}`;
+  debugStatus.innerHTML=`Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b><br>Anti-veille : <b>${wakeLock?"actif":"non actif / non supporté"}</b><br>Micro : <b>${recognitionRunning?"actif":"arrêté"}</b><br>Audio Papa : <b>${audioPapa?audioPapa.getAttribute("src"):"absent"}</b><br>Etat : <b>${APP_STATE}</b><br>Groupes détectés : ${Array.from(detectedGroups).join(", ")||"aucun"}`;
   debugTranscript.innerHTML=lastText?`<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>`:"";
   debugHits.innerHTML=detectedItems.slice(0,10).map(item=>`<div class="debugHit"><b>${item.time} — ${escapeHtml(item.label)}${item.newGroup?" ✅ nouvelle catégorie":""}</b><br>Phrase proche : « ${escapeHtml(item.phrase)} »<br>Source : ${item.source}<br>Entendu : « ${escapeHtml(item.spoken)} »</div>`).join("")||`<div style="color:#a9b3d1;margin-top:8px">Aucune phrase sensible détectée.</div>`;
 }
@@ -310,25 +331,73 @@ function preparePapaAudio(){
 }
 
 async function startHibou(){
-  preparePapaAudio();
-  if(!recognition)recognition=setupRecognition(); if(!recognition)return;
-  active=true;callTriggered=false;home.style.display="none";blackScreen.classList.add("active");
-  await requestWakeLock(); updateDebug("Démarrage HIBOU");
-  try{recognition.start()}catch(e){restartMicSoft("démarrage")}
+  if(APP_STATE !== "IDLE") return;
+
+  clearAllTimers();
+
+  try{
+    if(audioPapa){
+      audioPapa.pause();
+      audioPapa.currentTime = 0;
+      audioPapa.muted = false;
+      audioPapa.load();
+    }
+  }catch(e){}
+
+  active=true;
+  callTriggered=false;
+  recognitionRunning=false;
+  restartingMic=false;
+  detectedGroups.clear();
+  detectedItems=[];
+  analyzedMemory.clear();
+  transcriptArchive=[];
+
+  APP_STATE = "LISTENING";
+
+  if(!recognition)recognition=setupRecognition();
+  if(!recognition){
+    APP_STATE = "IDLE";
+    return;
+  }
+
+  home.style.display="none";
+  if(safeAlert) safeAlert.classList.remove("visible");
+  callScreen.classList.remove("visible");
+  blackScreen.classList.add("active");
+
+  await requestWakeLock();
+  updateDebug("Démarrage HIBOU");
+
+  try{
+    recognition.start();
+  }catch(e){
+    restartMicSoft("démarrage");
+  }
 }
 function stopRecognition(){active=false;if(recognition){try{recognition.stop()}catch(e){}}}
 async function triggerPapaCall(){
-  callTriggered=true; stopRecognition(); await releaseWakeLock();
-  blackScreen.classList.remove("active"); callScreen.classList.add("visible");
-  incomingButtons.style.display="flex"; activeCallControls.style.display="none";
-  callModeText.textContent="appel entrant"; callState.textContent="Appel mobile";
-  startRingtone(); vibratePattern();
+  if(APP_STATE !== "LISTENING") return;
+  APP_STATE = "INCOMING_CALL";
+  callTriggered=true;
+  stopRecognition();
+  await releaseWakeLock();
+
+  blackScreen.classList.remove("active");
+  callScreen.classList.add("visible");
+  if(safeAlert) safeAlert.classList.remove("visible");
+  incomingButtons.style.display="flex";
+  activeCallControls.style.display="none";
+  callModeText.textContent="appel entrant";
+  callState.textContent="Appel mobile";
+  startRingtone();
+  vibratePattern();
 }
 function startRingtone(){
   try{
     const AudioContext=window.AudioContext||window.webkitAudioContext; const ctx=new AudioContext();
     function beep(){const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type="sine";osc.frequency.value=880;gain.gain.value=0.13;osc.connect(gain);gain.connect(ctx.destination);osc.start();setTimeout(()=>{try{osc.stop()}catch(e){}},420)}
-    beep(); ringTimer=setInterval(beep,1200);
+    beep(); ringTimer=addInterval(beep,1200);
   }catch(e){}
 }
 function stopRingtone(){if(ringTimer){clearInterval(ringTimer);ringTimer=null}}
@@ -342,7 +411,7 @@ function playPapaAudio(){
   return new Promise(resolve=>{
     if(!audioPapa){
       callState.textContent="Audio Papa absent";
-      setTimeout(resolve,3000);
+      addTimeout(resolve,3000);
       return;
     }
 
@@ -352,7 +421,7 @@ function playPapaAudio(){
     const finish=()=>{
       if(finished)return;
       finished=true;
-      clearTimeout(maxTimer);
+      if(maxTimer) clearTimeout(maxTimer);
       audioPapa.removeEventListener("ended",finish);
       audioPapa.removeEventListener("error",onError);
       callState.textContent="Fin audio Papa";
@@ -360,10 +429,8 @@ function playPapaAudio(){
     };
 
     const onError=()=>{
-      // On ne zappe pas instantanément vers HIBOU.
-      // On laisse quelques secondes visibles pour constater que l'audio Papa n'a pas chargé.
       callState.textContent="Audio Papa non chargé";
-      setTimeout(finish,3500);
+      addTimeout(finish,2500);
     };
 
     try{
@@ -385,9 +452,7 @@ function playPapaAudio(){
       playPromise.then(()=>{
         callState.textContent="Papa parle...";
       }).catch(()=>{
-        // Sur certains iPhone, play() peut refuser si le fichier n'est pas encore prêt.
-        // On retente une fois après un très court délai, toujours avant HIBOU.
-        setTimeout(()=>{
+        addTimeout(()=>{
           const retry=audioPapa.play();
           if(retry && typeof retry.catch==="function"){
             retry.catch(onError);
@@ -396,20 +461,21 @@ function playPapaAudio(){
       });
     }
 
-    // Sécurité : si l'événement ended ne remonte jamais, on attend la durée réelle de l'audio.
-    // Si la durée est inconnue, on laisse 25 secondes avant d'enchaîner.
-    setTimeout(()=>{
+    addTimeout(()=>{
       let delay=25000;
       try{
         if(audioPapa.duration && !isNaN(audioPapa.duration) && isFinite(audioPapa.duration)){
           delay=Math.max(5000, Math.min(90000, audioPapa.duration*1000 + 1200));
         }
       }catch(e){}
-      maxTimer=setTimeout(finish,delay);
+      maxTimer=addTimeout(finish,delay);
     },800);
   });
 }
 async function answerCall(){
+  if(APP_STATE !== "INCOMING_CALL") return;
+  APP_STATE = "CALL_ACTIVE";
+
   stopRingtone();
   if(navigator.vibrate)navigator.vibrate(0);
 
@@ -418,51 +484,134 @@ async function answerCall(){
   callModeText.textContent="appel en cours";
   callState.textContent="Papa parle";
 
-  // 1) On garde l'audio Papa qui fonctionne.
   await playPapaAudio();
 
-  // 2) Puis alerte visuelle + vibration forte.
-  await sleep(600);
-  showSafetyAlert();
+  addTimeout(()=>showSafetyAlert(), 600);
 }
 function showSafetyAlert(){
+  APP_STATE = "SAFETY_ALERT";
+
+  try{
+    stopRingtone();
+  }catch(e){}
+
+  try{
+    if(audioPapa){
+      audioPapa.pause();
+      audioPapa.currentTime = 0;
+      audioPapa.muted = false;
+    }
+  }catch(e){}
+
   callScreen.classList.remove("visible");
+  blackScreen.classList.remove("active");
   if(safeAlert) safeAlert.classList.add("visible");
 
-  // Vibration d'alerte répétée : fonctionne sur Android, parfois limitée sur iPhone/Safari.
+  // Vibration : très fiable Android, souvent bloquée sur iPhone/Safari.
   if(navigator.vibrate){
-    navigator.vibrate([700,250,700,250,1000,400,1000]);
+    navigator.vibrate([900,250,900,250,1200,500,1200]);
   }
 
-  // Deuxième rappel vibration après quelques secondes.
-  setTimeout(()=>{
-    if(safeAlert && safeAlert.classList.contains("visible") && navigator.vibrate){
-      navigator.vibrate([700,250,700,250,1000]);
+  addTimeout(()=>{
+    if(APP_STATE === "SAFETY_ALERT" && navigator.vibrate){
+      navigator.vibrate([900,250,900,250,1200]);
     }
-  },4500);
+  }, 4000);
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-async function resetToHome(){
-  stopRingtone(); await releaseWakeLock();
-  try{audioPapa.pause();audioPapa.currentTime=0}catch(e){}
-  if("speechSynthesis"in window)window.speechSynthesis.cancel(); if(navigator.vibrate)navigator.vibrate(0);
-  active=false;callTriggered=false;recognitionRunning=false;restartingMic=false;transcriptArchive=[];
-  detectedGroups.clear();detectedItems=[];analyzedMemory.clear();tapCount=0;
-  debugPanel.classList.remove("visible");callScreen.classList.remove("visible");if(safeAlert)safeAlert.classList.remove("visible");blackScreen.classList.remove("active");home.style.display="flex";updateDebug("Retour accueil");
+async function hardResetToHome(){
+  APP_STATE = "RESETTING";
+
+  clearAllTimers();
+
+  try{
+    active = false;
+    callTriggered = false;
+    recognitionRunning = false;
+    restartingMic = false;
+  }catch(e){}
+
+  try{
+    if(recognition){
+      recognition.onend = null;
+      recognition.onerror = null;
+      recognition.onresult = null;
+      recognition.onstart = null;
+      recognition.stop();
+    }
+  }catch(e){}
+  recognition = null;
+
+  try{
+    stopRingtone();
+  }catch(e){}
+
+  try{
+    if(audioPapa){
+      audioPapa.pause();
+      audioPapa.currentTime = 0;
+      audioPapa.muted = false;
+      audioPapa.load();
+    }
+  }catch(e){}
+
+  try{
+    if("speechSynthesis" in window){
+      window.speechSynthesis.cancel();
+    }
+  }catch(e){}
+
+  try{
+    if(navigator.vibrate){
+      navigator.vibrate(0);
+    }
+  }catch(e){}
+
+  try{
+    await releaseWakeLock();
+  }catch(e){}
+
+  try{
+    transcriptArchive = [];
+    detectedGroups.clear();
+    detectedItems = [];
+    analyzedMemory.clear();
+    tapCount = 0;
+  }catch(e){}
+
+  try{
+    debugPanel.classList.remove("visible");
+    callScreen.classList.remove("visible");
+    blackScreen.classList.remove("active");
+    if(safeAlert) safeAlert.classList.remove("visible");
+    incomingButtons.style.display="flex";
+    activeCallControls.style.display="none";
+    callModeText.textContent="appel entrant";
+    callState.textContent="Appel mobile";
+    home.style.display="flex";
+  }catch(e){}
+
+  APP_STATE = "IDLE";
+  updateDebug("Reset complet effectué");
 }
+
+async function resetToHome(){
+  await hardResetToHome();
+}
+
 activateBtn.addEventListener("click",startHibou);
 answerBtn.addEventListener("click",answerCall);
 declineBtn.addEventListener("click",resetToHome);
 hangupBtn.addEventListener("click",resetToHome);
-if(safeOkBtn) safeOkBtn.addEventListener("click",resetToHome);
+if(safeOkBtn) safeOkBtn.addEventListener("click",hardResetToHome);
 hiddenTapZone.addEventListener("click",()=>{tapCount++;clearTimeout(tapTimer);tapTimer=setTimeout(()=>tapCount=0,1200);if(tapCount>=4){debugPanel.classList.toggle("visible");tapCount=0}});
 forceCallBtn.addEventListener("click",triggerPapaCall);
 injectBtn.addEventListener("click",()=>{analyze("tu es très jolie","test");analyze("ne dis rien à tes parents","test");analyze("monte dans ma voiture","test");analyze("donne moi ton numéro","test")});
 wakeBtn.addEventListener("click",requestWakeLock);
 restartMicBtn.addEventListener("click",()=>restartMicSoft("bouton debug"));
-stopBtn.addEventListener("click",resetToHome);
-testPapaBtn.addEventListener("click",async()=>{await playPapaAudio();await sleep(600);showSafetyAlert();});
+stopBtn.addEventListener("click",hardResetToHome);
+testPapaBtn.addEventListener("click",async()=>{APP_STATE="CALL_ACTIVE"; await playPapaAudio(); addTimeout(()=>showSafetyAlert(),600);});
 updateDebug("Prêt");
 </script>
 </body>

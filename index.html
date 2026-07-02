@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HIBOU - SC11 stable reset complet</title>
+  <title>HIBOUX - SC12 choix iPhone Android</title>
   <style>
     :root{--text:#f5f7ff;--muted:#a9b3d1;--green:#2dff88;--yellow:#ffd166}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -101,6 +101,41 @@
       100%{transform:scale(1);box-shadow:0 0 35px rgba(255,59,48,.35)}
     }
 
+
+    .supportChoice{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin:16px auto 14px;
+      max-width:390px;
+    }
+    .supportBtn{
+      border:2px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      padding:16px 10px;
+      color:white;
+      font-size:18px;
+      font-weight:950;
+      cursor:pointer;
+      background:rgba(255,255,255,.08);
+    }
+    .supportBtn.iphone.selected{
+      background:#1d7dff;
+      border-color:#6ed7ff;
+      box-shadow:0 0 24px rgba(29,125,255,.45);
+    }
+    .supportBtn.android.selected{
+      background:#34c759;
+      border-color:#9fffc0;
+      box-shadow:0 0 24px rgba(52,199,89,.45);
+    }
+    #activateBtn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background:#3a3f55;
+      box-shadow:none;
+    }
+
   </style>
 </head>
 <body>
@@ -122,9 +157,13 @@
         <path d="M74 162 C92 180 106 188 120 188 C134 188 148 180 166 162" fill="none" stroke="#cfefff" stroke-width="8" stroke-linecap="round"/>
       </svg>
       <h1>HIBOU</h1>
-      <div class="version">Version SC11 — stable</div>
-      <div class="baseline">Base conservée. Détection stable, appel Papa, audio papa.m4a, alerte visuelle, puis reset complet de l’application.</div>
-      <button id="activateBtn">Activer HIBOU</button>
+      <div class="version">Version SC12 — choix support</div>
+      <div class="baseline">Choisis le support : iPhone conserve la version stable validée ; Android active un mode micro renforcé pour Chrome.</div>
+      <div class="supportChoice">
+        <button class="supportBtn iphone" id="iphoneBtn">Mode iPhone</button>
+        <button class="supportBtn android" id="androidBtn">Mode Android</button>
+      </div>
+      <button id="activateBtn" disabled>Choisis d’abord le support</button>
       <div class="mini">Debug : 4 tapes en bas à droite sur l’écran noir.</div>
     </div>
   </section>
@@ -132,7 +171,7 @@
   <section id="blackScreen">
     <div id="hiddenTapZone"></div>
     <div id="debugPanel">
-      <div class="debugTitle">HIBOU SC11 — panneau test</div>
+      <div class="debugTitle">HIBOU SC12 — panneau test</div>
       <div id="debugStatus">Écoute active…</div>
       <div class="debugBtns">
         <button id="forceCallBtn">Forcer appel</button>
@@ -206,6 +245,9 @@ const callModeText=document.getElementById("callModeText"), answerBtn=document.g
 const forceCallBtn=document.getElementById("forceCallBtn"), injectBtn=document.getElementById("injectBtn"), wakeBtn=document.getElementById("wakeBtn"), restartMicBtn=document.getElementById("restartMicBtn"), stopBtn=document.getElementById("stopBtn");
 const audioPapa=document.getElementById("audioPapa"), testPapaBtn=document.getElementById("testPapaBtn");
 const safeAlert=document.getElementById("safeAlert"), safeOkBtn=document.getElementById("safeOkBtn");
+const iphoneBtn=document.getElementById("iphoneBtn"), androidBtn=document.getElementById("androidBtn");
+
+let SUPPORT_MODE = null;
 
 let APP_STATE = "IDLE";
 let allTimeouts = [];
@@ -270,7 +312,7 @@ function handleHits(hits,spokenText,source){
   if(detectedGroups.size>=TRIGGER_CATEGORIES&&!callTriggered) triggerPapaCall();
 }
 function updateDebug(lastText=""){
-  debugStatus.innerHTML=`Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b><br>Anti-veille : <b>${wakeLock?"actif":"non actif / non supporté"}</b><br>Micro : <b>${recognitionRunning?"actif":"arrêté"}</b><br>Audio Papa : <b>${audioPapa?audioPapa.getAttribute("src"):"absent"}</b><br>Etat : <b>${APP_STATE}</b><br>Groupes détectés : ${Array.from(detectedGroups).join(", ")||"aucun"}`;
+  debugStatus.innerHTML=`Écoute active — base ${TOTAL_PHRASES} phrases / ${SENSITIVE_GROUPS.length} groupes<br>Seuil appel Papa : <b>${Math.min(detectedGroups.size,TRIGGER_CATEGORIES)}/${TRIGGER_CATEGORIES}</b><br>Anti-veille : <b>${wakeLock?"actif":"non actif / non supporté"}</b><br>Micro : <b>${recognitionRunning?"actif":"arrêté"}</b><br>Audio Papa : <b>${audioPapa?audioPapa.getAttribute("src"):"absent"}</b><br>Support : <b>${SUPPORT_MODE || "non choisi"}</b><br>Etat : <b>${APP_STATE}</b><br>Groupes détectés : ${Array.from(detectedGroups).join(", ")||"aucun"}`;
   debugTranscript.innerHTML=lastText?`<div style="margin:8px 0;color:#cbd5ff">Dernier texte : « ${escapeHtml(lastText)} »</div>`:"";
   debugHits.innerHTML=detectedItems.slice(0,10).map(item=>`<div class="debugHit"><b>${item.time} — ${escapeHtml(item.label)}${item.newGroup?" ✅ nouvelle catégorie":""}</b><br>Phrase proche : « ${escapeHtml(item.phrase)} »<br>Source : ${item.source}<br>Entendu : « ${escapeHtml(item.spoken)} »</div>`).join("")||`<div style="color:#a9b3d1;margin-top:8px">Aucune phrase sensible détectée.</div>`;
 }
@@ -280,7 +322,10 @@ function setupRecognition(){
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SpeechRecognition){alert("Reconnaissance vocale non disponible sur ce navigateur.");return null}
   const rec=new SpeechRecognition();
-  rec.lang="fr-FR"; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=3;
+  rec.lang="fr-FR";
+  rec.continuous=true;
+  rec.interimResults=true;
+  rec.maxAlternatives = SUPPORT_MODE === "android" ? 5 : 3;
   rec.onstart=()=>{recognitionRunning=true;updateDebug("Micro démarré")};
   rec.onresult=(event)=>{
     let finalText="",interimText="";
@@ -294,8 +339,21 @@ function setupRecognition(){
     if(merged){updateDebug(merged);analyze(merged,finalText.trim()?"final+interim":"interim")}
     if(finalText.trim())transcriptArchive.push({time:new Date().toISOString(),text:finalText.trim()});
   };
-  rec.onerror=(event)=>{updateDebug("Erreur micro : "+event.error);recognitionRunning=false};
-  rec.onend=()=>{recognitionRunning=false;updateDebug("Micro arrêté");if(active&&!callTriggered&&!restartingMic)setTimeout(()=>restartMicSoft("onend"),450)};
+  rec.onerror=(event)=>{
+    updateDebug("Erreur micro : "+event.error);
+    recognitionRunning=false;
+    if(SUPPORT_MODE === "android" && active && !callTriggered){
+      addTimeout(()=>restartMicSoft("erreur android "+event.error),900);
+    }
+  };
+  rec.onend=()=>{
+    recognitionRunning=false;
+    updateDebug("Micro arrêté");
+    if(active&&!callTriggered&&!restartingMic){
+      const delay = SUPPORT_MODE === "android" ? 900 : 450;
+      addTimeout(()=>restartMicSoft(SUPPORT_MODE === "android" ? "onend android" : "onend"), delay);
+    }
+  };
   return rec;
 }
 function restartMicSoft(reason="manuel"){
@@ -330,8 +388,24 @@ function preparePapaAudio(){
   }
 }
 
+function selectSupport(mode){
+  SUPPORT_MODE = mode;
+
+  if(iphoneBtn) iphoneBtn.classList.toggle("selected", mode === "iphone");
+  if(androidBtn) androidBtn.classList.toggle("selected", mode === "android");
+
+  activateBtn.disabled = false;
+  activateBtn.textContent = mode === "iphone" ? "Activer HIBOU iPhone" : "Activer HIBOU Android";
+
+  updateDebug("Support choisi : " + mode);
+}
+
 async function startHibou(){
   if(APP_STATE !== "IDLE") return;
+  if(!SUPPORT_MODE){
+    alert("Choisis d’abord iPhone ou Android.");
+    return;
+  }
 
   clearAllTimers();
 
@@ -354,6 +428,16 @@ async function startHibou(){
   transcriptArchive=[];
 
   APP_STATE = "LISTENING";
+
+  if(SUPPORT_MODE === "android"){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      stream.getTracks().forEach(t=>t.stop());
+      updateDebug("Micro Android autorisé");
+    }catch(e){
+      updateDebug("Micro Android non autorisé : " + e.message);
+    }
+  }
 
   if(!recognition)recognition=setupRecognition();
   if(!recognition){
@@ -601,6 +685,8 @@ async function resetToHome(){
 }
 
 activateBtn.addEventListener("click",startHibou);
+if(iphoneBtn) iphoneBtn.addEventListener("click",()=>selectSupport("iphone"));
+if(androidBtn) androidBtn.addEventListener("click",()=>selectSupport("android"));
 answerBtn.addEventListener("click",answerCall);
 declineBtn.addEventListener("click",resetToHome);
 hangupBtn.addEventListener("click",resetToHome);
